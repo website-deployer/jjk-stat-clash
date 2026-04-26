@@ -11,11 +11,30 @@ interface HelpPageProps {
 export function HelpPage({ isOpen, onClose }: HelpPageProps) {
   const [activeTab, setActiveTab] = useState<'rules' | 'synergies' | 'stats' | 'rarity'>('rules');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterRarity, setFilterRarity] = useState('All');
+  const [sortBy, setSortBy] = useState('Default');
 
-  const filteredCharacters = characters.filter(char => 
-    char.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (char.loreDescription && char.loreDescription.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  let filteredCharacters = characters.filter(char => {
+    const matchesSearch = char.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (char.loreDescription && char.loreDescription.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesRarity = filterRarity === 'All' || char.grade === filterRarity || (filterRarity === 'Common' && (!char.grade || char.grade === 'Common'));
+    return matchesSearch && matchesRarity;
+  });
+
+  const rarityOrder: Record<string, number> = {
+    'Mythic': 5,
+    'Legendary': 4,
+    'Epic': 3,
+    'Rare': 2,
+    'Uncommon': 1,
+    'Common': 0
+  };
+
+  if (sortBy === 'Rarity') {
+    filteredCharacters.sort((a, b) => rarityOrder[b.grade || 'Common'] - rarityOrder[a.grade || 'Common']);
+  } else if (sortBy === 'Alphabetical') {
+    filteredCharacters.sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   const publicSynergies = pairings.filter(p => !p.isSecret);
 
@@ -238,15 +257,41 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
               {activeTab === 'stats' && (
                 <div className="h-full flex flex-col">
                   {/* Search Bar */}
-                  <div className="relative mb-8 max-w-xl mx-auto w-full shrink-0">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Search entities, techniques, or tools..."
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3 pl-12 pr-6 text-sm focus:border-red-500 outline-none transition-all placeholder:text-zinc-600 font-mono"
-                    />
+                  <div className="relative mb-8 max-w-xl mx-auto w-full shrink-0 flex flex-col gap-4">
+                    <div className="relative w-full">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                      <input 
+                        type="text" 
+                        placeholder="Search entities, techniques, or tools..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3 pl-12 pr-6 text-sm focus:border-red-500 outline-none transition-all placeholder:text-zinc-600 font-mono"
+                      />
+                    </div>
+                    <div className="flex gap-4 justify-center">
+                      <select 
+                        value={filterRarity} 
+                        onChange={e => setFilterRarity(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-xs font-mono text-zinc-400 focus:border-red-500 outline-none"
+                      >
+                        <option value="All">All Rarities</option>
+                        <option value="Mythic">Mythic</option>
+                        <option value="Legendary">Legendary</option>
+                        <option value="Epic">Epic</option>
+                        <option value="Rare">Rare</option>
+                        <option value="Uncommon">Uncommon</option>
+                        <option value="Common">Common</option>
+                      </select>
+                      <select 
+                        value={sortBy} 
+                        onChange={e => setSortBy(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-xs font-mono text-zinc-400 focus:border-red-500 outline-none"
+                      >
+                        <option value="Default">Default Sort</option>
+                        <option value="Rarity">Sort by Rarity (Mythic to Common)</option>
+                        <option value="Alphabetical">Sort Alphabetical</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Character Grid */}

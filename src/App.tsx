@@ -8,6 +8,7 @@ import { PhaseTransition } from './components/PhaseTransition';
 import { HelpPage } from './components/HelpPage';
 import { motion, AnimatePresence } from 'motion/react';
 import { Swords, Plus, CheckCircle2, ChevronDown, Ban, Zap, Dices, Sparkles, Target, Trash2, HelpCircle, Trophy } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 
 const emptyDraft = (): DraftSelection => {
   const draft: Partial<DraftSelection> = {};
@@ -334,12 +335,6 @@ export default function App() {
           
           {!draftPhase.includes('comparing') && draftPhase === 'drafting' && (
             <div className="flex gap-2">
-              <button
-                onClick={handleAutoFill}
-                className="flex items-center gap-2 px-6 py-3 rounded-full font-bold font-display uppercase tracking-wider transition-all bg-yellow-600 hover:bg-yellow-700 text-black shadow-[0_0_20px_rgba(202,138,4,0.4)] hover:scale-105"
-              >
-                Auto Fill Random
-              </button>
               <button
                 onClick={() => allSelected && setActiveOverlay('clash')}
                 disabled={!allSelected}
@@ -936,6 +931,7 @@ export default function App() {
           <HelpCircle size={32} />
         </motion.button>
       )}
+      <Analytics />
     </div>
   );
 }

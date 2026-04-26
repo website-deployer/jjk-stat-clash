@@ -16,6 +16,16 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
   const [scores, setScores] = useState<number[]>(new Array(players.length).fill(0));
   const [isFinished, setIsFinished] = useState(false);
   const [blackFlashes, setBlackFlashes] = useState<boolean[][]>([]);
+
+  const getWinners = () => {
+    const maxScore = Math.max(...scores);
+    return players.map((_, i) => i).filter(i => scores[i] === maxScore);
+  };
+
+  const displayWins = [...roundWins];
+  if (isFinished) {
+    getWinners().forEach(w => displayWins[w]++);
+  }
   
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
@@ -302,11 +312,6 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
     setIsFinished(false);
   };
 
-  const getWinners = () => {
-    const maxScore = Math.max(...scores);
-    return players.map((_, i) => i).filter(i => scores[i] === maxScore);
-  };
-
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col items-center gap-8 p-4">
       <div className="relative flex flex-wrap justify-center gap-4 items-center bg-[#0a0a0a]/80 backdrop-blur-md border border-red-900/40 shadow-[0_0_20px_rgba(220,38,38,0.2)] px-6 py-3 rounded-2xl mb-4">
@@ -318,9 +323,9 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
               <span className="font-mono text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">Series Record</span>
             </div>
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-red-900/20">
-              <Trophy size={16} className={roundWins[i] > 0 ? "text-yellow-500 animate-pulse" : "text-zinc-700"} />
+              <Trophy size={16} className={displayWins[i] > 0 ? "text-yellow-500 animate-pulse" : "text-zinc-700"} />
               <span className="font-display font-black text-red-500 text-2xl drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]">
-                {roundWins[i] || 0}
+                {displayWins[i] || 0}
                 <span className="text-xs ml-1 text-red-900/60 uppercase">Wins</span>
               </span>
             </div>
@@ -329,7 +334,7 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
         ))}
       </div>
 
-      <div className="w-full max-w-[100vw] overflow-x-hidden pb-6 px-1 lg:px-4">
+      <div className="w-full max-w-[100vw] pb-6 px-1 lg:px-4">
         <div className="flex flex-col items-center w-full mx-auto max-w-7xl">
           {/* HEADERS */}
           <div className="w-full mb-8 relative flex justify-center">
