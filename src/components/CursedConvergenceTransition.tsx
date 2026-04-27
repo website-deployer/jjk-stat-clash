@@ -5,23 +5,16 @@ import { DraftSelection } from './PlayerCard';
 export function CursedConvergenceTransition({ players, onPhaseSwap, onComplete }: { players?: DraftSelection[], onPhaseSwap: () => void, onComplete: () => void }) {
   useEffect(() => {
     const sequence = async () => {
-      setTimeout(() => onPhaseSwap(), 150);
+      onPhaseSwap();
       // Cinematic duration
-      await new Promise(r => setTimeout(r, 3500));
+      await new Promise(r => setTimeout(r, 4500));
       onComplete();
     };
     sequence();
   }, [onPhaseSwap, onComplete]);
 
-  const randoms = React.useMemo(() => {
-    return Array(8).fill(0).map(() => ({
-      dur1: 3 + Math.random() * 2,
-      dur2: 0.3 + Math.random() * 0.2
-    }));
-  }, []);
-
   return (
-    <div className="fixed inset-0 z-[100] pointer-events-none flex justify-center items-center bg-black overflow-hidden [perspective:1000px]">
+    <div className="fixed inset-0 z-[100] pointer-events-none flex justify-center items-center bg-black overflow-hidden perspective-1000">
       
       {/* Master Shake Container */}
       <motion.div
@@ -54,15 +47,6 @@ export function CursedConvergenceTransition({ players, onPhaseSwap, onComplete }
               br = 150;
             }
 
-            const leftVal = Math.min(tl, bl);
-            const rightVal = Math.max(tr, br);
-            const widthVal = rightVal - leftVal;
-
-            const localTl = ((tl - leftVal) / widthVal) * 100;
-            const localTr = ((tr - leftVal) / widthVal) * 100;
-            const localBr = ((br - leftVal) / widthVal) * 100;
-            const localBl = ((bl - leftVal) / widthVal) * 100;
-
             return (
               <motion.div
                 key={i}
@@ -73,13 +57,11 @@ export function CursedConvergenceTransition({ players, onPhaseSwap, onComplete }
                   delay: i * 0.1,
                   ease: [0.19, 1, 0.22, 1] 
                 }}
-                className="absolute top-0 bottom-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.9)] overflow-hidden"
+                className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.9)] overflow-hidden"
                 style={{ 
-                  left: `${leftVal}%`,
-                  width: `${widthVal}%`,
                   backgroundColor: color,
-                  clipPath: `polygon(${localTl}% 0%, ${localTr}% 0%, ${localBr}% 100%, ${localBl}% 100%)`,
-                  WebkitClipPath: `polygon(${localTl}% 0%, ${localTr}% 0%, ${localBr}% 100%, ${localBl}% 100%)`,
+                  clipPath: `polygon(${tl}% 0%, ${tr}% 0%, ${br}% 100%, ${bl}% 100%)`,
+                  WebkitClipPath: `polygon(${tl}% 0%, ${tr}% 0%, ${br}% 100%, ${bl}% 100%)`,
                   zIndex: 10,
                   willChange: 'transform, filter'
                 }}
@@ -97,13 +79,13 @@ export function CursedConvergenceTransition({ players, onPhaseSwap, onComplete }
                       x: ['-10%', '10%', '-10%'],
                       y: ['-10%', '10%', '-10%']
                     }} 
-                    transition={{ duration: randoms[i] ? randoms[i].dur1 : 4, repeat: Infinity, ease: "easeInOut" }} 
+                    transition={{ duration: 3 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }} 
                   />
                   <motion.div 
                     className="absolute w-2 md:w-3 h-[200%] bg-white transform -skew-x-[15deg] shadow-[0_0_20px_rgba(255,255,255,0.8)]"
                     style={{ left: '50%', marginLeft: `${slant}%`, willChange: 'opacity, transform' }}
                     animate={{ y: ['0%', '-50%'], opacity: [0.1, 0.9, 0.1] }} 
-                    transition={{ duration: randoms[i] ? randoms[i].dur2 : 0.4, repeat: Infinity, ease: "linear" }} 
+                    transition={{ duration: 0.3 + Math.random() * 0.2, repeat: Infinity, ease: "linear" }} 
                   />
                 </div>
 
