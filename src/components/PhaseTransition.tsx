@@ -18,7 +18,7 @@ export function PhaseTransition({
   bottomPhase,
   bottomTitle
 }: PhaseTransitionProps) {
-  const [phase, setPhase] = useState<'blackout' | 'kanji_slam' | 'impact' | 'reverse_slam' | 'manifest' | 'fade'>('blackout');
+  const [phase, setPhase] = useState<'blackout' | 'kanji_slam' | 'impact' | 'reverse_slam' | 'manifest' | 'reveal' | 'fade'>('blackout');
 
   const phaseSwapRef = useRef(onPhaseSwap);
   const completeRef = useRef(onComplete);
@@ -38,6 +38,7 @@ export function PhaseTransition({
         setPhase('manifest');
         phaseSwapRef.current(); // Background swaps underneath
       }, 1800),
+      setTimeout(() => setPhase('reveal'), 1900),
       setTimeout(() => setPhase('fade'), 2800),
       setTimeout(() => completeRef.current(), 3200),
     ];
@@ -47,12 +48,12 @@ export function PhaseTransition({
 
   return (
     <div className={`fixed inset-0 z-[100] pointer-events-none flex items-center justify-center transition-colors duration-300 ${
-      phase === 'fade' || phase === 'manifest' ? 'bg-transparent' : 'bg-black'
+      phase === 'fade' || phase === 'manifest' || phase === 'reveal' ? 'bg-transparent' : 'bg-black'
     }`}>
       
       {/* Background overlay for manifest phase so we can see text clearly before fade */}
       <AnimatePresence>
-        {phase === 'manifest' && (
+        {(phase === 'manifest' || phase === 'reveal') && (
           <motion.div 
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -65,7 +66,7 @@ export function PhaseTransition({
         
         {/* KANJI SLAM PHASE */}
         <AnimatePresence>
-          {(phase === 'kanji_slam' || phase === 'impact') && (
+          {(phase === 'kanji_slam' || phase === 'impact' || phase === 'reverse_slam') && (
             <motion.div
               layoutId="kanji-container"
               initial={{ scale: 3, opacity: 0 }}
@@ -73,7 +74,7 @@ export function PhaseTransition({
               exit={{ scale: 0, opacity: 0 }}
               transition={{ 
                 duration: phase === 'kanji_slam' ? 0.2 : 0.3, 
-                ease: phase === 'kanji_slam' ? 'easeIn' : 'backIn' 
+                ease: phase === 'kanji_slam' ? 'easeIn' : phase === 'reverse_slam' ? 'circIn' : 'backIn' 
               }}
               className="absolute flex flex-col items-center justify-center -rotate-6"
             >
@@ -100,13 +101,13 @@ export function PhaseTransition({
 
         {/* MANIFEST PHASE */}
         <AnimatePresence>
-          {(phase === 'manifest') && (
+          {(phase === 'manifest' || phase === 'reveal') && (
             <motion.div
               initial={{ scale: 1.5, opacity: 0, rotateX: 90 }}
               animate={{ scale: 1, opacity: 1, rotateX: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: -50 }}
               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-              className="absolute z-50 flex flex-col items-center justify-center text-center perspective-[1000px]"
+              className="absolute z-50 flex flex-col items-center justify-center text-center [perspective:1000px]"
             >
               <motion.div 
                 initial={{ width: 0 }}
@@ -131,11 +132,11 @@ export function PhaseTransition({
         </AnimatePresence>
         
         {/* SCREEN SHAKE EFFECT */}
-        {(phase === 'kanji_slam' || phase === 'manifest') && (
+        {(phase === 'kanji_slam' || phase === 'manifest' || phase === 'reveal') && (
           <motion.div
             className="absolute inset-0 pointer-events-none ring-[20px] ring-inset ring-red-600 mix-blend-overlay opacity-50"
             animate={{ x: [-10, 10, -10, 10, 0], y: [-10, 10, -10, 10, 0] }}
-            transition={{ duration: 0.3, repeat: 1 }}
+            transition={{ duration: 0.3, repeat: Infinity }}
           />
         )}
       </div>

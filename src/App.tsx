@@ -38,7 +38,7 @@ export default function App() {
   const [gambleConfig, setGambleConfig] = useState({ totalRolls: 50, luckyRolls: 10, rollsPerStat: 5 });
   const [gambleStates, setGambleStates] = useState<Record<number, GambleState>>({});
   
-  // Sync gamble states if players are added/removed
+  // Sync gamble states if players are added/removed or config changes
   React.useEffect(() => {
     if (draftMode === 'gamble' && players.length > 0) {
       setGambleStates(prev => {
@@ -52,6 +52,16 @@ export default function App() {
               statRolls: {}
             };
             changed = true;
+          } else if (Object.keys(next[i].statRolls).length === 0) {
+            // If hasn't started spinning, allow config overwrite
+            if (next[i].remainingTotal !== gambleConfig.totalRolls || next[i].remainingLucky !== gambleConfig.luckyRolls) {
+              next[i] = {
+                ...next[i],
+                remainingTotal: gambleConfig.totalRolls,
+                remainingLucky: gambleConfig.luckyRolls,
+              };
+              changed = true;
+            }
           }
         });
         return changed ? next : prev;
@@ -87,9 +97,35 @@ export default function App() {
     setTooltipPos({ x, y });
   };
 
+  const validateDraft = (draft: DraftSelection) => {
+    const newDraft = { ...draft };
+    statsList.forEach(s => {
+      const selectedId = newDraft[s];
+      if (selectedId) {
+        const entity = characters.find(c => c.id === selectedId);
+        if (entity && 'prerequisite' in entity && entity.prerequisite) {
+          const hasPrerequisite = Object.values(newDraft).includes(entity.prerequisite);
+          if (!hasPrerequisite) newDraft[s] = null;
+        }
+        if (selectedId === 'sukunas-fingers') {
+          const hasVessel = Object.values(newDraft).some(id => {
+            if (!id) return false;
+            if (['yuji', 'modulo-yuji', 'sukuna', 'megumi'].includes(id as string)) return true;
+            const char = characters.find(c => c.id === id);
+            if (char && char.loreDescription && (char.loreDescription.includes('Curse') || char.loreDescription.includes('curses'))) return true;
+            return false;
+          });
+          if (!hasVessel) newDraft[s] = null;
+        }
+      }
+    });
+    return newDraft as DraftSelection;
+  };
+
   const handleSelect = (playerIndex: number, stat: string, entityId: string) => {
     const newPlayers = [...players];
-    newPlayers[playerIndex] = { ...newPlayers[playerIndex], [stat]: entityId || null };
+    const updatedDraft = { ...newPlayers[playerIndex], [stat]: entityId || null };
+    newPlayers[playerIndex] = validateDraft(updatedDraft);
     setPlayers(newPlayers);
   };
 
@@ -210,7 +246,7 @@ export default function App() {
     
     // Auto-resolve Sukuna's Fingers edge case if vessel changes
     if (stat !== 'tool') {
-      newPlayers[playerIndex] = { ...newPlayers[playerIndex] };
+      newPlayers[playerIndex] = validateDraft(newPlayers[playerIndex]);
     }
     setPlayers(newPlayers);
   };
@@ -545,9 +581,9 @@ export default function App() {
                         )}
                       </div>
                     </div>
-                    <input type="range" min={Math.max(10, gambleConfig.rollsPerStat * 10)} max="300" step="5" value={gambleConfig.totalRolls} onChange={e => {
+                    <input type="range" min="10" max="300" step="5" value={gambleConfig.totalRolls} onChange={e => {
                       const val = +e.target.value;
-                      setGambleConfig({...gambleConfig, totalRolls: val});
+                      setGambleConfig({...gambleConfig, totalRolls: val, rollsPerStat: Math.min(gambleConfig.rollsPerStat, Math.floor(val / 10))});
                     }} className="w-full accent-yellow-500 cursor-pointer h-2 bg-zinc-800 rounded-lg appearance-none" />
                   </div>
 
@@ -578,9 +614,9 @@ export default function App() {
                       </div>
                       <span className="text-2xl font-black text-red-500 font-display">{gambleConfig.rollsPerStat}</span>
                     </div>
-                    <input type="range" min="1" max={Math.floor(gambleConfig.totalRolls / 10)} step="1" value={gambleConfig.rollsPerStat} onChange={e => {
+                    <input type="range" min="1" max="30" step="1" value={gambleConfig.rollsPerStat} onChange={e => {
                       const val = +e.target.value;
-                      setGambleConfig({...gambleConfig, rollsPerStat: val});
+                      setGambleConfig({...gambleConfig, rollsPerStat: val, totalRolls: Math.max(gambleConfig.totalRolls, val * 10)});
                     }} className="w-full accent-red-500 cursor-pointer h-2 bg-zinc-800 rounded-lg appearance-none" />
                   </div>
                 </div>
