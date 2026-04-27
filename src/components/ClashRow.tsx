@@ -19,10 +19,6 @@ export function ClashRow({ statKey, statName, players, statData, isActive, isPas
   const [showFlash, setShowFlash] = useState(false);
   const [flashPos, setFlashPos] = useState({ x: 0, y: 0 });
 
-  const characterMap = React.useMemo(() => 
-    Object.fromEntries(characters.map(c => [c.id, c])), 
-  [characters]);
-
   useEffect(() => {
     if (isActive) {
       const hasFlash = statData.some(d => d.isBlackFlash);
@@ -60,20 +56,9 @@ export function ClashRow({ statKey, statName, players, statData, isActive, isPas
         className="grid w-full relative z-10 px-1 lg:px-4 gap-1 lg:gap-4"
         style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}
       >
-        {/* Screen Inversion Flash (Temporary, Master Portal) */}
-        {isActive && showFlash && typeof document !== 'undefined' && createPortal(
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0, 1, 0] }}
-            transition={{ duration: 1.5, times: [0, 0.1, 0.2, 0.3, 1], ease: "easeOut" }}
-            className="fixed inset-0 bg-white mix-blend-difference z-[9999] pointer-events-none"
-          />,
-          document.body
-        )}
-
         {players.map((draft, i) => {
           const entityId = draft[statKey];
-          const entity = entityId ? characterMap[entityId as string] : undefined;
+          const entity = characters.find(c => c.id === entityId);
           const { baseValue, bonus, total, isBlackFlash, isNullified } = statData[i];
           const isWinner = total === maxVal && showResult && !isNullified;
           const flavorText = entity && 'flavorText' in entity ? entity.flavorText : null;
@@ -97,7 +82,6 @@ export function ClashRow({ statKey, statName, players, statData, isActive, isPas
               isLoser={isLoser}
               maxVal={maxVal}
               isNullified={isNullified}
-              statKey={statKey}
             />
           );
         })}
@@ -107,7 +91,7 @@ export function ClashRow({ statKey, statName, players, statData, isActive, isPas
 }
 
 // Sub-component for individual stat readout featuring a counting animation
-function StatColumn({ entity, total, bonus, isWinner, isBlackFlash, showResult, showFlash, isActive, flavorText, isHRZero, isLoser, maxVal, isNullified, statKey }: any) {
+function StatColumn({ entity, total, bonus, isWinner, isBlackFlash, showResult, showFlash, isActive, flavorText, isHRZero, isLoser, maxVal, isNullified }: any) {
   const count = useMotionValue(0);
   const rounded = useTransform(count, Math.round);
 
@@ -118,41 +102,38 @@ function StatColumn({ entity, total, bonus, isWinner, isBlackFlash, showResult, 
         ease: [0.16, 1, 0.3, 1] // Custom snappy spring-like easing 
       });
       return controls.stop;
+    } else {
+      count.set(0);
     }
-  }, [statKey, showResult, total, count, isNullified]);
+  }, [showResult, total, count, isNullified]);
 
   return (
     <div className={`flex w-full flex-col items-center justify-center px-1 md:px-2 relative transition-all duration-700 ${isHRZero ? 'opacity-30 grayscale' : ''} ${isLoser ? 'opacity-40 grayscale scale-95' : 'scale-100'}`}>
-      
-      {/* HR / Nullified Diagonal Background */}
-      {isHRZero && (
-        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)' }}></div>
-      )}
       {isBlackFlash && showFlash && (
         <>
+          {/* Screen Inversion Flash (Temporary) */}
+          {isActive && typeof document !== 'undefined' && createPortal(
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0, 1, 0] }}
+              transition={{ duration: 1.5, times: [0, 0.1, 0.2, 0.3, 1], ease: "easeOut" }}
+              className="fixed inset-0 bg-white mix-blend-difference z-[9999] pointer-events-none"
+            />,
+            document.body
+          )}
+          
           {/* Permanent Black Flash Text */}
           <motion.div 
             initial={{ opacity: 0, scale: 0, rotate: -20, y: 50 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
-              rotate: [-20, 5, -5, 0], 
-              y: -30,
-              boxShadow: [
-                "0 0 20px rgba(220,38,38,0.8)", 
-                "0 0 40px rgba(220,38,38,1)", 
-                "0 0 20px rgba(220,38,38,0.8)"
-              ]
-            }}
+            animate={{ opacity: 1, scale: 1, rotate: [-20, 5, -5, 0], y: -30 }}
             transition={{ 
               duration: 1.2, 
               type: "spring", 
               stiffness: 200, 
               damping: 12,
-              rotate: { duration: 0.8, ease: "easeOut" },
-              boxShadow: { repeat: Infinity, duration: 0.2 }
+              rotate: { duration: 0.8, ease: "easeOut" }
             }}
-            className="absolute whitespace-nowrap text-lg font-black text-red-500 bg-black/90 px-3 py-1 rounded border-2 border-red-600 z-30 uppercase tracking-widest"
+            className="absolute whitespace-nowrap text-lg font-black text-red-500 bg-black/90 px-3 py-1 rounded border-2 border-red-600 z-30 uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.8)]"
             style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000' }}
           >
             Black Flash!
