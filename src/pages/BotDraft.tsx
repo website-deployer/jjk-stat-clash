@@ -375,7 +375,7 @@ export default function BotDraft() {
 
               <div className="flex items-center gap-4 mb-8">
                 <div className={`w-3 h-3 rounded-full animate-pulse ${difficulty === 'easy' ? 'bg-green-500' :
-                    difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                  difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
                   }`}></div>
                 <span className="text-zinc-400 font-mono text-xs uppercase tracking-[0.3em]">Difficulty: {difficulty}</span>
               </div>
@@ -404,7 +404,6 @@ export default function BotDraft() {
             </motion.div>
           )}
         </div>
-        <FeedbackSystem />
       </div>
     );
   }
