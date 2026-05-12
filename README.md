@@ -37,7 +37,7 @@ JJK Stat Clash is a local multiplayer drafting game where 2–8 players build th
 
 ## ✨ Features
 
-- **80+ entities** — Characters, Cursed Techniques, Domain Expansions, Tools, Shikigami, and Special Powers
+- **100+ entities** — Characters, Cursed Techniques, Domain Expansions, Tools, Shikigami, and Special Powers
 - **Rarity system** — Common → Uncommon → Rare → Epic → Legendary → Mythic
 - **Synergy pairings** — Draft entities from the same lore lineage for stat bonuses (e.g., Gojo + Limitless + Six Eyes)
 - **Secret synergies** — Hidden pairings that grant massive bonuses when discovered

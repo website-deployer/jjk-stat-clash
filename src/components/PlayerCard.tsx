@@ -125,7 +125,7 @@ function RollingScrambler({ allEntities, targetId, kanji }: { allEntities: any[]
   );
 }
 
-export function SearchableSelect({ value, options, onChange, placeholder, kanji, colorTheme, isSynergyActive, isBindingVow }: any) {
+export function SearchableSelect({ value, options, onChange, placeholder, kanji, colorTheme, isSynergyActive, isBindingVow, disabled }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [hoveredOption, setHoveredOption] = useState<any>(null);
@@ -165,22 +165,25 @@ export function SearchableSelect({ value, options, onChange, placeholder, kanji,
 
   const selectedOption = options.find((o: any) => o.value === value);
 
+  const defaultTheme = { text: 'text-red-500', border: 'border-red-900/50', shadow: '', glow: 'shadow-[0_0_15px_rgba(220,38,38,0.2)]', bg: '' };
+  const theme = colorTheme || defaultTheme;
+
   return (
-    <div ref={wrapperRef} className="relative w-full">
+    <div ref={wrapperRef} className={`relative w-full ${disabled ? 'pointer-events-none' : ''}`}>
       <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-[#0a0a0a] border ${value ? colorTheme.border : 'border-zinc-800'} text-white p-2 pl-10 pr-10 rounded-md text-sm cursor-pointer flex items-center justify-between transition-all duration-300 ${value ? colorTheme.glow : 'hover:border-zinc-600'} ${isSynergyActive ? 'animate-pulse' : ''} relative`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`w-full bg-[#0a0a0a] border ${value ? theme.border : 'border-zinc-800'} text-white p-2 pl-10 pr-10 rounded-md text-sm cursor-pointer flex items-center justify-between transition-all duration-300 ${value ? theme.glow : 'hover:border-zinc-600'} ${isSynergyActive ? 'animate-pulse' : ''} ${disabled ? 'opacity-90 grayscale-[0.2]' : ''} relative`}
       >
         {/* Subtle scanline effect */}
         <div className="absolute inset-0 rounded-md overflow-hidden pointer-events-none">
           <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] opacity-20"></div>
         </div>
         
-        <span className={`absolute left-3 font-black text-lg ${value ? colorTheme.text : 'text-zinc-700'} font-display`}>{kanji}</span>
+        <span className={`absolute left-3 font-black text-lg ${value ? theme.text : 'text-zinc-700'} font-display`}>{kanji}</span>
         <span className={`truncate font-medium z-10 ${value ? 'text-zinc-100' : 'text-zinc-500 italic'}`}>{selectedOption ? selectedOption.label : placeholder}</span>
         
         <div className="absolute right-2 flex items-center gap-1 z-10 bg-[#0a0a0a] pl-1">
-          {value && (
+          {value && !disabled && (
             <button 
               onClick={(e) => { e.stopPropagation(); onChange(""); }}
               className="text-zinc-500 hover:text-red-500 transition-colors p-1"
@@ -233,7 +236,7 @@ export function SearchableSelect({ value, options, onChange, placeholder, kanji,
               {options.filter((o: any) => o.label.toLowerCase().includes(search.toLowerCase())).map((option: any, i: number) => (
                 <div
                   key={`${option.value}-${i}`}
-                  className={`px-3 py-2.5 text-sm cursor-pointer transition-colors border-l-2 ${value === option.value ? colorTheme.border + ' ' + colorTheme.text + ' bg-zinc-900/80 font-bold' : 'border-transparent text-zinc-300 hover:bg-zinc-800 hover:border-zinc-500'}`}
+                  className={`px-3 py-2.5 text-sm cursor-pointer transition-colors border-l-2 ${value === option.value ? theme.border + ' ' + theme.text + ' bg-zinc-900/80 font-bold' : 'border-transparent text-zinc-300 hover:bg-zinc-800 hover:border-zinc-500'}`}
                   onClick={() => {
                     onChange(option.value);
                     setIsOpen(false);
@@ -303,9 +306,10 @@ interface PlayerCardProps {
   };
   gambleConfig?: { totalRolls: number; luckyRolls: number; rollsPerStat: number };
   onGambleRoll?: (stat: string, isLucky: boolean) => void;
+  lockOnSelect?: boolean;
 }
 
-export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove, canRemove, getAvailableEntities, allEntities, draftMode, gambleState, gambleConfig, onGambleRoll }: PlayerCardProps) {
+export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove, canRemove, getAvailableEntities, allEntities, draftMode, gambleState, gambleConfig, onGambleRoll, lockOnSelect }: PlayerCardProps) {
   const colorTheme = playerColors[playerNum] || playerColors[1];
   const [rollingStats, setRollingStats] = useState<Record<string, boolean>>({});
   
@@ -387,11 +391,16 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
                 <label className={`text-[10px] font-mono font-bold uppercase tracking-widest ${currentId ? colorTheme.text : 'text-zinc-600'}`}>
                   {statLabels[stat]}
                 </label>
-                {draftMode === 'gamble' && gambleState && gambleConfig && (
-                  <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase">
-                    {gambleState.statRolls[stat] || 0}/{gambleConfig.rollsPerStat} Rolls
-                  </span>
-                )}
+                <div className="flex gap-2 items-center">
+                  {lockOnSelect && currentId && (
+                    <span className="text-[9px] font-mono font-black text-green-500 bg-green-500/10 border border-green-500/30 px-1.5 rounded uppercase tracking-tighter">Locked</span>
+                  )}
+                  {draftMode === 'gamble' && gambleState && gambleConfig && (
+                    <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase">
+                      {gambleState.statRolls[stat] || 0}/{gambleConfig.rollsPerStat} Rolls
+                    </span>
+                  )}
+                </div>
               </div>
               
               {draftMode === 'gamble' ? (
@@ -452,6 +461,7 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
                   kanji={statKanji[stat]}
                   colorTheme={colorTheme}
                   isSynergyActive={isEntityInActiveSynergy(currentId)}
+                  disabled={lockOnSelect && currentId !== null}
                 />
               )}
             </div>
@@ -522,6 +532,7 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
                 colorTheme={{ text: 'text-yellow-500', border: 'border-yellow-600/50', shadow: '', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.2)]', bg: '' }}
                 isSynergyActive={false}
                 isBindingVow={true}
+                disabled={lockOnSelect && draft.bindingVow !== null}
               />
             )
           ) : (
