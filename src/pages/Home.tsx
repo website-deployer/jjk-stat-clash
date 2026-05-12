@@ -33,7 +33,7 @@ export default function Home() {
           playsInline
           className="absolute min-w-full min-h-full object-cover opacity-50 grayscale-[0.3] contrast-[1.1]"
         >
-          <source src="/YTDown_YouTube_Sukuna-vs-Mahoraga-Blu-Ray-Full-Fight-4K_Media_lDzXBSxAxKw_001_1080p.mp4#t=25" type="video/mp4" />
+          <source src="/hero.mp4" type="video/mp4" />
         </video>
         
         {/* Refined Overlays */}
