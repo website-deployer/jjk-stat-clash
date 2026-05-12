@@ -10,7 +10,7 @@ import { Swords, Ban, CheckCircle2, Trophy, Clock, Cpu, ArrowLeft, Dices, Sparkl
 import { Link, useNavigate } from 'react-router-dom';
 import { getBotPick } from '../utils/botLogic';
 import { Helmet } from 'react-helmet-async';
-import { FeedbackSystem } from '../components/FeedbackSystem';
+import { Helmet } from 'react-helmet-async';
 
 const TURN_TIME_SECONDS = 30;
 

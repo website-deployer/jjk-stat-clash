@@ -15,7 +15,7 @@ interface FeedbackEntry {
   timestamp: string;
 }
 
-export function FeedbackSystem() {
+export function FeedbackSystem({ hidden = false }: { hidden?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'form' | 'vault'>('form');
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
@@ -76,6 +76,7 @@ export function FeedbackSystem() {
   return (
     <>
       {/* Floating Toggle Button */}
+      {!hidden && (
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -84,6 +85,7 @@ export function FeedbackSystem() {
       >
         <MessageSquare size={28} />
       </motion.button>
+      )}
 
       <AnimatePresence>
         {isOpen && (

@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Swords, Plus, CheckCircle2, Ban, HelpCircle, Trophy, Cpu, Users, Zap, Dices, Sparkles, Target, Trash2, Clock } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import { SystemProtocol } from '../components/SystemProtocol';
-import { FeedbackSystem } from '../components/FeedbackSystem';
+import { SystemProtocol } from '../components/SystemProtocol';
 
 const emptyDraft = (): DraftSelection => {
   const draft: Partial<DraftSelection> = {};
@@ -342,7 +342,7 @@ export default function LocalDraft() {
       <header className="w-full py-3 md:py-4 border-b border-zinc-900/80 bg-[#050505]/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
           <div className="flex flex-col items-center md:items-start">
-            <h1 className="text-2xl md:text-3xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400 uppercase tracking-tighter drop-shadow-[0_0_15px_rgba(220,38,38,0.3)] pr-1">
+            <h1 className="text-2xl md:text-3xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400 uppercase tracking-wide drop-shadow-[0_0_15px_rgba(220,38,38,0.3)] pr-1">
               JJK DRAFT
             </h1>
             <p className="text-zinc-500 font-mono text-[10px] md:text-xs tracking-widest uppercase">Build Your Ultimate Sorcerer</p>
