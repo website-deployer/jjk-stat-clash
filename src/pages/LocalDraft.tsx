@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Swords, Plus, CheckCircle2, Ban, HelpCircle, Trophy, Cpu, Users, Zap, Dices, Sparkles, Target, Trash2, Clock } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import { SystemProtocol } from '../components/SystemProtocol';
-import { SystemProtocol } from '../components/SystemProtocol';
 
 const emptyDraft = (): DraftSelection => {
   const draft: Partial<DraftSelection> = {};
@@ -36,11 +35,11 @@ export default function LocalDraft() {
   const [roundWins, setRoundWins] = useState<number[]>([0, 0]);
   const [matchHistory, setMatchHistory] = useState<any[]>([]);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  
+
   // Gamble configurations
   const [gambleConfig, setGambleConfig] = useState({ totalRolls: 50, luckyRolls: 10, rollsPerStat: 5 });
   const [gambleStates, setGambleStates] = useState<Record<number, GambleState>>({});
-  
+
   // Sync gamble states if players are added/removed or config changes
   React.useEffect(() => {
     if (draftMode === 'gamble' && players.length > 0) {
@@ -128,7 +127,7 @@ export default function LocalDraft() {
       const newPlayers = [...players];
       newPlayers.splice(index, 1);
       setPlayers(newPlayers);
-      
+
       const newBans = [...bans];
       newBans.splice(index, 1);
       setBans(newBans);
@@ -165,23 +164,23 @@ export default function LocalDraft() {
   const handleGambleRoll = (playerIndex: number, stat: string, isLucky: boolean) => {
     const currentState = gambleStates[playerIndex];
     if (!currentState) return;
-    
+
     // Binding Vows are exempt from the global currency pool but still respect the per-stat limit
     const isVow = stat === 'bindingVow';
-    
+
     if (!isVow) {
       if (currentState.remainingTotal <= 0) return;
     }
-    
+
     if ((currentState.statRolls[stat] || 0) >= gambleConfig.rollsPerStat) return;
 
     if (isLucky && currentState.remainingLucky <= 0) return;
 
     const draft = players[playerIndex];
     const category = stat === 'bindingVow' ? 'bindingVow' : (statCategoryMap[stat] || 'character');
-    
+
     let available: any = stat === 'bindingVow' ? bindingVows : getAvailableEntities(draft[stat], category as string, draft);
-    
+
     if (stat === 'tool') {
       available = getAvailableEntities(draft[stat], 'tool', draft);
     }
@@ -201,13 +200,13 @@ export default function LocalDraft() {
         else if (grade === 'Rare') pwr += 15;
         return pwr;
       };
-      
+
       const sorted = [...available].sort((a, b) => getEntityPower(b) - getEntityPower(a));
       available = sorted.slice(0, Math.max(1, Math.ceil(sorted.length * 0.3)));
     }
 
     const randomEntity = available[Math.floor(Math.random() * available.length)];
-    
+
     const newGambleStates = { ...gambleStates };
     newGambleStates[playerIndex] = {
       ...currentState,
@@ -222,7 +221,7 @@ export default function LocalDraft() {
 
     const newPlayers = [...players];
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], [stat]: randomEntity.id };
-    
+
     // Auto-resolve Sukuna's Fingers edge case if vessel changes
     if (stat !== 'tool') {
       newPlayers[playerIndex] = validateDraft(newPlayers[playerIndex]);
@@ -233,16 +232,16 @@ export default function LocalDraft() {
   const getAvailableEntities = (currentSelectedId: string | null, category: string, draft: DraftSelection) => {
     const selectedIds = getSelectedIds();
     const globalBans = bans.flat().filter(Boolean);
-    
+
     return characters.filter(entity => {
       if (entity.category !== category) return false;
       if (globalBans.includes(entity.id) && entity.id !== currentSelectedId) return false;
-      
+
       // Allow 'binding-vow' to be selected by multiple players
       if (entity.id !== 'binding-vow') {
         if (selectedIds.has(entity.id) && entity.id !== currentSelectedId) return false;
       }
-      
+
       if ('prerequisite' in entity && entity.prerequisite) {
         const hasPrerequisite = Object.values(draft).includes(entity.prerequisite);
         if (!hasPrerequisite) return false;
@@ -258,7 +257,7 @@ export default function LocalDraft() {
         });
         if (!hasVessel) return false;
       }
-      
+
       return true;
     });
   };
@@ -267,7 +266,7 @@ export default function LocalDraft() {
     const newPlayers = players.map(draft => ({ ...draft }));
     const takenIds = new Set(getSelectedIds());
     const globalBans = bans.flat().filter(Boolean);
-    
+
     newPlayers.forEach((draft) => {
       statsList.forEach(stat => {
         if (!draft[stat]) {
@@ -307,13 +306,13 @@ export default function LocalDraft() {
     if (draftMode === 'gamble') {
       const newGambleStates = { ...gambleStates };
       newPlayers.forEach((_, i) => {
-         if (newGambleStates[i]) {
-            newGambleStates[i] = {
-               ...newGambleStates[i],
-               remainingTotal: 0,
-               remainingLucky: 0
-            };
-         }
+        if (newGambleStates[i]) {
+          newGambleStates[i] = {
+            ...newGambleStates[i],
+            remainingTotal: 0,
+            remainingLucky: 0
+          };
+        }
       });
       setGambleStates(newGambleStates);
     }
@@ -339,38 +338,37 @@ export default function LocalDraft() {
       </div>
 
       {draftPhase !== 'start' && (
-      <header className="w-full py-3 md:py-4 border-b border-zinc-900/80 bg-[#050505]/80 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
-          <div className="flex flex-col items-center md:items-start">
-            <h1 className="text-2xl md:text-3xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400 uppercase tracking-wide drop-shadow-[0_0_15px_rgba(220,38,38,0.3)] pr-1">
-              JJK DRAFT
-            </h1>
-            <p className="text-zinc-500 font-mono text-[10px] md:text-xs tracking-widest uppercase">Build Your Ultimate Sorcerer</p>
-          </div>
-          
-          {!draftPhase.includes('comparing') && draftPhase === 'drafting' && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => allSelected && setActiveOverlay('clash')}
-                disabled={!allSelected}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold font-display uppercase tracking-wider transition-all ${
-                  allSelected 
-                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:scale-105' 
-                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                }`}
-              >
-                <CheckCircle2 size={20} />
-                {allSelected ? 'Finish Draft' : 'Complete Selections'}
-              </button>
+        <header className="w-full py-3 md:py-4 border-b border-zinc-900/80 bg-[#050505]/80 backdrop-blur-xl sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+            <div className="flex flex-col items-center md:items-start">
+              <h1 className="text-2xl md:text-3xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400 uppercase tracking-wide drop-shadow-[0_0_15px_rgba(220,38,38,0.3)] pr-1">
+                JJK DRAFT
+              </h1>
+              <p className="text-zinc-500 font-mono text-[10px] md:text-xs tracking-widest uppercase">Build Your Ultimate Sorcerer</p>
             </div>
-          )}
-        </div>
-      </header>
+
+            {!draftPhase.includes('comparing') && draftPhase === 'drafting' && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => allSelected && setActiveOverlay('clash')}
+                  disabled={!allSelected}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold font-display uppercase tracking-wider transition-all ${allSelected
+                      ? 'bg-red-600 hover:bg-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:scale-105'
+                      : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                    }`}
+                >
+                  <CheckCircle2 size={20} />
+                  {allSelected ? 'Finish Draft' : 'Complete Selections'}
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
       )}
 
       <main className="max-w-7xl mx-auto px-4 py-12 flex flex-col items-center">
         {draftPhase !== 'start' && draftPhase !== 'comparing' && matchHistory.length > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col md:flex-row gap-4 md:gap-8 items-center mb-10 bg-zinc-900 border border-zinc-800 px-8 py-3 rounded-full shadow-lg relative z-20"
@@ -382,13 +380,13 @@ export default function LocalDraft() {
             <div className="flex gap-6 items-center font-mono font-bold text-sm tracking-widest uppercase">
               {players.map((p, i) => (
                 <span key={i} className={roundWins[i] > 0 ? "text-yellow-400 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" : "text-zinc-500"}>
-                  {p.playerName || `P${i+1}`}: <span className="text-xl">{roundWins[i] || 0}</span>
+                  {p.playerName || `P${i + 1}`}: <span className="text-xl">{roundWins[i] || 0}</span>
                 </span>
               ))}
             </div>
             <div className="hidden md:block w-px h-6 bg-zinc-700"></div>
-            <button 
-              onClick={() => { setMatchHistory([]); setRoundWins(players.map(() => 0)); setDraftPhase('start'); }} 
+            <button
+              onClick={() => { setMatchHistory([]); setRoundWins(players.map(() => 0)); setDraftPhase('start'); }}
               className="text-[10px] font-mono text-zinc-500 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-2"
             >
               End Series
@@ -397,179 +395,179 @@ export default function LocalDraft() {
         )}
         <AnimatePresence mode="wait">
           {draftPhase === 'start' && (
-            <motion.div 
-              key="start" 
+            <motion.div
+              key="start"
               className="min-h-[80vh] flex flex-col items-center justify-center relative"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
               transition={{ duration: 0.8 }}
             >
-               <motion.div
-                 initial={{ scale: 3, opacity: 0 }}
-                 animate={{ scale: 1, opacity: 1 }}
-                 transition={{ duration: 1.5, ease: "circOut", bounce: 0 }}
-                 className="text-7xl md:text-[180px] font-black font-display uppercase tracking-[-0.05em] text-center leading-[0.85] z-10"
-               >
-                  JJK
-                  <br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-red-800 drop-shadow-[0_0_20px_rgba(220,38,38,0.4)] px-2">
-                    DRAFT
-                  </span>
-               </motion.div>
+              <motion.div
+                initial={{ scale: 3, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 1.5, ease: "circOut", bounce: 0 }}
+                className="text-7xl md:text-[180px] font-black font-display uppercase tracking-[-0.05em] text-center leading-[0.85] z-10"
+              >
+                JJK
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-red-800 drop-shadow-[0_0_20px_rgba(220,38,38,0.4)] px-2">
+                  DRAFT
+                </span>
+              </motion.div>
 
-               <motion.p 
-                 initial={{ opacity: 0, scale: 0.95 }}
-                 animate={{ opacity: 1, scale: 1 }}
-                 transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-                 className="mt-8 text-zinc-400 font-mono tracking-[0.3em] uppercase text-sm md:text-lg text-center mb-8"
-                 style={{ willChange: "opacity, transform" }}
-               >
-                 Build Your Ultimate Sorcerer
-               </motion.p>
+              <motion.p
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
+                className="mt-8 text-zinc-400 font-mono tracking-[0.3em] uppercase text-sm md:text-lg text-center mb-8"
+                style={{ willChange: "opacity, transform" }}
+              >
+                Build Your Ultimate Sorcerer
+              </motion.p>
 
-               <motion.div 
-                 initial={{ opacity: 0, y: 20 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: 1.5, duration: 0.6 }}
-                 className="flex flex-col gap-8 mt-4 z-20 w-full max-w-4xl"
-               >
-                  {/* Row 1: Primary Mode Selection */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Local Clash Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5, duration: 0.6 }}
+                className="flex flex-col gap-8 mt-4 z-20 w-full max-w-4xl"
+              >
+                {/* Row 1: Primary Mode Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Local Clash Section */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 1.8, duration: 0.8 }}
+                    className="flex flex-col gap-4 bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm relative group overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-1 h-full bg-red-600 opacity-50"></div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <Swords className="text-red-500" size={24} />
+                      <h3 className="text-xl font-black text-white uppercase tracking-widest">Local Clash</h3>
+                    </div>
+                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-4">Battle on a single device</p>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <button
+                        onClick={() => { setDraftMode('normal'); setActiveOverlay('startToBan'); }}
+                        className="px-6 py-4 bg-zinc-900 border border-red-900/30 hover:bg-red-950 text-red-500 hover:text-white hover:border-red-500 font-bold text-sm uppercase tracking-[0.2em] relative overflow-hidden group/btn transition-all rounded-lg shadow-lg"
+                      >
+                        Standard Protocol
+                      </button>
+                      <button
+                        onClick={() => { setDraftMode('gamble'); setDraftPhase('gambleConfig'); }}
+                        className="px-6 py-4 bg-zinc-950 border border-yellow-900/30 hover:bg-yellow-950 text-yellow-500 hover:text-white hover:border-yellow-500 font-bold text-sm uppercase tracking-[0.2em] relative overflow-hidden group/btn transition-all rounded-lg shadow-lg"
+                      >
+                        Cursed Lottery
+                      </button>
+                    </div>
+                  </motion.div>
+
+                  {/* Online & Bot Section */}
+                  <div className="flex flex-col gap-6">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9, y: 30 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ delay: 1.8, duration: 0.8 }}
-                      className="flex flex-col gap-4 bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm relative group overflow-hidden"
+                      transition={{ delay: 2.0, duration: 0.8 }}
+                      className="flex-1"
                     >
-                      <div className="absolute top-0 left-0 w-1 h-full bg-red-600 opacity-50"></div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <Swords className="text-red-500" size={24} />
-                        <h3 className="text-xl font-black text-white uppercase tracking-widest">Local Clash</h3>
-                      </div>
-                      <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-4">Battle on a single device</p>
-                      
-                      <div className="grid grid-cols-1 gap-3">
-                        <button
-                          onClick={() => { setDraftMode('normal'); setActiveOverlay('startToBan'); }}
-                          className="px-6 py-4 bg-zinc-900 border border-red-900/30 hover:bg-red-950 text-red-500 hover:text-white hover:border-red-500 font-bold text-sm uppercase tracking-[0.2em] relative overflow-hidden group/btn transition-all rounded-lg shadow-lg"
-                        >
-                          Standard Protocol
-                        </button>
-                        <button
-                          onClick={() => { setDraftMode('gamble'); setDraftPhase('gambleConfig'); }}
-                          className="px-6 py-4 bg-zinc-950 border border-yellow-900/30 hover:bg-yellow-950 text-yellow-500 hover:text-white hover:border-yellow-500 font-bold text-sm uppercase tracking-[0.2em] relative overflow-hidden group/btn transition-all rounded-lg shadow-lg"
-                        >
-                          Cursed Lottery
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => navigate('/play/bot')}
+                        className="w-full h-full px-6 py-8 bg-zinc-900 border-2 border-blue-900/50 hover:bg-blue-950 text-blue-500 hover:text-white hover:border-blue-500 font-black text-xl uppercase tracking-[0.2em] relative overflow-hidden group transition-all rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-4"
+                      >
+                        <div className="absolute inset-0 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left opacity-10 duration-300"></div>
+                        <Cpu size={32} />
+                        <div className="text-center">
+                          <div className="text-xl">Vs Bot</div>
+                          <div className="text-[10px] font-mono text-zinc-500 mt-1">Simulated Combat</div>
+                        </div>
+                      </button>
                     </motion.div>
 
-                    {/* Online & Bot Section */}
-                    <div className="flex flex-col gap-6">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ delay: 2.0, duration: 0.8 }}
-                        className="flex-1"
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ delay: 2.2, duration: 0.8 }}
+                      className="flex-1"
+                    >
+                      <button
+                        onClick={() => navigate('/play/multiplayer')}
+                        className="w-full h-full px-6 py-8 bg-zinc-900 border-2 border-purple-900/50 hover:bg-purple-950 text-purple-500 hover:text-white hover:border-purple-500 font-black text-xl uppercase tracking-[0.2em] relative overflow-hidden group transition-all rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-4"
                       >
-                        <button
-                          onClick={() => navigate('/play/bot')}
-                          className="w-full h-full px-6 py-8 bg-zinc-900 border-2 border-blue-900/50 hover:bg-blue-950 text-blue-500 hover:text-white hover:border-blue-500 font-black text-xl uppercase tracking-[0.2em] relative overflow-hidden group transition-all rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-4"
-                        >
-                           <div className="absolute inset-0 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left opacity-10 duration-300"></div>
-                           <Cpu size={32} />
-                           <div className="text-center">
-                             <div className="text-xl">Vs Bot</div>
-                             <div className="text-[10px] font-mono text-zinc-500 mt-1">Simulated Combat</div>
-                           </div>
-                        </button>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ delay: 2.2, duration: 0.8 }}
-                        className="flex-1"
-                      >
-                        <button
-                          onClick={() => navigate('/play/multiplayer')}
-                          className="w-full h-full px-6 py-8 bg-zinc-900 border-2 border-purple-900/50 hover:bg-purple-950 text-purple-500 hover:text-white hover:border-purple-500 font-black text-xl uppercase tracking-[0.2em] relative overflow-hidden group transition-all rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-4"
-                        >
-                           <div className="absolute inset-0 bg-purple-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left opacity-10 duration-300"></div>
-                           <Users size={32} />
-                           <div className="text-center">
-                             <div className="text-xl">Online</div>
-                             <div className="text-[10px] font-mono text-zinc-500 mt-1">Global Network</div>
-                           </div>
-                        </button>
-                      </motion.div>
-                    </div>
+                        <div className="absolute inset-0 bg-purple-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left opacity-10 duration-300"></div>
+                        <Users size={32} />
+                        <div className="text-center">
+                          <div className="text-xl">Online</div>
+                          <div className="text-[10px] font-mono text-zinc-500 mt-1">Global Network</div>
+                        </div>
+                      </button>
+                    </motion.div>
                   </div>
-    </motion.div>
-               
-               {/* Decorative background element for start screen */}
-               <motion.div 
-                 initial={{ scale: 0, rotate: -45, opacity: 0 }}
-                 animate={{ scale: 1, rotate: 0, opacity: 0.05 }}
-                 transition={{ duration: 3, delay: 0.5, ease: "easeOut" }}
-                 className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10 overflow-hidden"
-               >
-                  <div className="text-[400px] md:text-[600px] font-black font-display rotate-12 leading-none text-white blur-[4px]">
-                    呪
-                  </div>
-               </motion.div>
+                </div>
+              </motion.div>
 
-               {/* Match History / Series Recorder */}
-               {matchHistory.length > 0 && (
-                 <motion.div 
-                   initial={{ opacity: 0, y: 30 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   className="mt-16 w-full max-w-2xl bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group"
-                 >
-                   <div className="absolute top-0 right-0 p-4 opacity-10 font-black text-6xl italic -rotate-12 pointer-events-none">HISTORY</div>
-                   <h3 className="text-xl font-black font-display text-white uppercase tracking-widest mb-6 flex items-center gap-3">
-                     <Trophy className="text-yellow-500" size={24} /> 
-                     Series Logs
-                   </h3>
-                   <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                     {matchHistory.map((m, i) => (
-                       <div key={i} className="bg-black/40 border border-white/5 p-3 rounded-lg flex items-center justify-between group-hover:border-red-500/20 transition-colors">
-                         <div className="flex flex-col">
-                           <span className="text-[10px] font-mono text-zinc-500 uppercase">{new Date(m.date).toLocaleTimeString()}</span>
-                           <div className="flex gap-2 items-center mt-1">
-                             {m.players.map((p: any, pi: number) => (
-                               <div key={pi} className="flex items-center gap-1">
-                                 <span className={`text-xs font-black uppercase ${p.isWinner ? 'text-yellow-500 underline decoration-yellow-500/50 underline-offset-2' : 'text-zinc-400'}`}>
-                                   {p.name}: {p.score}
-                                 </span>
-                                 {pi < m.players.length - 1 && <span className="text-zinc-700 text-[10px]">VS</span>}
-                               </div>
-                             ))}
-                           </div>
-                         </div>
-                         {m.players.length > 0 && (
-                           <div className="text-[10px] font-mono font-black text-red-500 bg-red-500/10 px-2 py-1 rounded">
-                             MATCH {matchHistory.length - i}
-                           </div>
-                         )}
-                       </div>
-                     ))}
-                   </div>
-                   <button 
+              {/* Decorative background element for start screen */}
+              <motion.div
+                initial={{ scale: 0, rotate: -45, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 0.05 }}
+                transition={{ duration: 3, delay: 0.5, ease: "easeOut" }}
+                className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10 overflow-hidden"
+              >
+                <div className="text-[400px] md:text-[600px] font-black font-display rotate-12 leading-none text-white blur-[4px]">
+                  呪
+                </div>
+              </motion.div>
+
+              {/* Match History / Series Recorder */}
+              {matchHistory.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-16 w-full max-w-2xl bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 font-black text-6xl italic -rotate-12 pointer-events-none">HISTORY</div>
+                  <h3 className="text-xl font-black font-display text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                    <Trophy className="text-yellow-500" size={24} />
+                    Series Logs
+                  </h3>
+                  <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                    {matchHistory.map((m, i) => (
+                      <div key={i} className="bg-black/40 border border-white/5 p-3 rounded-lg flex items-center justify-between group-hover:border-red-500/20 transition-colors">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-mono text-zinc-500 uppercase">{new Date(m.date).toLocaleTimeString()}</span>
+                          <div className="flex gap-2 items-center mt-1">
+                            {m.players.map((p: any, pi: number) => (
+                              <div key={pi} className="flex items-center gap-1">
+                                <span className={`text-xs font-black uppercase ${p.isWinner ? 'text-yellow-500 underline decoration-yellow-500/50 underline-offset-2' : 'text-zinc-400'}`}>
+                                  {p.name}: {p.score}
+                                </span>
+                                {pi < m.players.length - 1 && <span className="text-zinc-700 text-[10px]">VS</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {m.players.length > 0 && (
+                          <div className="text-[10px] font-mono font-black text-red-500 bg-red-500/10 px-2 py-1 rounded">
+                            MATCH {matchHistory.length - i}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
                     onClick={() => { setMatchHistory([]); setRoundWins(players.map(() => 0)); }}
                     className="mt-4 text-[10px] font-mono text-zinc-600 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-2"
-                   >
-                     <Trash2 size={12} /> Clear Records
-                   </button>
-                 </motion.div>
-               )}
+                  >
+                    <Trash2 size={12} /> Clear Records
+                  </button>
+                </motion.div>
+              )}
             </motion.div>
           )}
 
-           {draftPhase === 'gambleConfig' && (
-             <div className="flex justify-center items-center h-[80vh] py-8">
+          {draftPhase === 'gambleConfig' && (
+            <div className="flex justify-center items-center h-[80vh] py-8">
               <motion.div
                 key="gambleConfig"
                 initial={{ opacity: 0, scale: 0.9, y: 40 }}
@@ -583,7 +581,7 @@ export default function LocalDraft() {
 
                 <div className="text-center z-10 relative">
                   <h2 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-700 uppercase tracking-widest font-display flex items-center justify-center gap-3 drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]">
-                    <Dices size={32} className="text-yellow-500" /> 
+                    <Dices size={32} className="text-yellow-500" />
                     Cursed Lottery
                   </h2>
                   <p className="text-yellow-500/50 font-mono tracking-[0.2em] uppercase text-xs mt-1">Configure Rules</p>
@@ -608,7 +606,7 @@ export default function LocalDraft() {
                     </div>
                     <input type="range" min="10" max="300" step="5" value={gambleConfig.totalRolls} onChange={e => {
                       const val = +e.target.value;
-                      setGambleConfig({...gambleConfig, totalRolls: val, rollsPerStat: Math.min(gambleConfig.rollsPerStat, Math.floor(val / 10))});
+                      setGambleConfig({ ...gambleConfig, totalRolls: val, rollsPerStat: Math.min(gambleConfig.rollsPerStat, Math.floor(val / 10)) });
                     }} className="w-full accent-yellow-500 cursor-pointer h-2 bg-zinc-800 rounded-lg appearance-none" />
                   </div>
 
@@ -624,7 +622,7 @@ export default function LocalDraft() {
                       <span className="text-2xl font-black text-yellow-400 font-display">{gambleConfig.luckyRolls}</span>
                     </div>
                     <input type="range" min="0" max={Math.min(50, gambleConfig.totalRolls)} step="1" value={gambleConfig.luckyRolls} onChange={e => {
-                      setGambleConfig({...gambleConfig, luckyRolls: +e.target.value});
+                      setGambleConfig({ ...gambleConfig, luckyRolls: +e.target.value });
                     }} className="w-full accent-yellow-400 cursor-pointer h-2 bg-zinc-800 rounded-lg appearance-none" />
                   </div>
 
@@ -641,7 +639,7 @@ export default function LocalDraft() {
                     </div>
                     <input type="range" min="1" max="30" step="1" value={gambleConfig.rollsPerStat} onChange={e => {
                       const val = +e.target.value;
-                      setGambleConfig({...gambleConfig, rollsPerStat: val, totalRolls: Math.max(gambleConfig.totalRolls, val * 10)});
+                      setGambleConfig({ ...gambleConfig, rollsPerStat: val, totalRolls: Math.max(gambleConfig.totalRolls, val * 10) });
                     }} className="w-full accent-red-500 cursor-pointer h-2 bg-zinc-800 rounded-lg appearance-none" />
                   </div>
                 </div>
@@ -664,8 +662,8 @@ export default function LocalDraft() {
                   Confirm Vow
                 </motion.button>
               </motion.div>
-             </div>
-           )}
+            </div>
+          )}
 
           {draftPhase === 'banning' && (
             <motion.div
@@ -682,7 +680,7 @@ export default function LocalDraft() {
                 </h2>
                 <p className="text-zinc-400">Each player must ban 2 entities from the draft pool.</p>
               </div>
-              
+
               <div className="flex flex-wrap justify-center gap-8 w-full items-start">
                 {players.map((_, pIndex) => (
                   <div key={pIndex} className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col gap-4 w-full max-w-sm relative transition-all duration-300 hover:z-50 focus-within:z-50">
@@ -732,7 +730,7 @@ export default function LocalDraft() {
                   </button>
                 )}
               </div>
-              
+
               {bans.every(pBans => pBans.length === 2 && pBans[0] && pBans[1]) && (
                 <motion.button
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -787,13 +785,13 @@ export default function LocalDraft() {
                 </motion.button>
               )}
 
-              <SystemProtocol 
+              <SystemProtocol
                 onClash={() => setActiveOverlay('clash')}
                 showClashButton={allSelected}
               />
             </motion.div>
           )}
-          
+
           {draftPhase === 'comparing' && (
             <motion.div
               key="comparison"
@@ -809,7 +807,7 @@ export default function LocalDraft() {
                 onReset={(winners, finalScores) => {
                   const newWins = [...roundWins];
                   while (newWins.length < players.length) newWins.push(0);
-                  
+
                   const matchRecord = {
                     date: new Date().toISOString(),
                     players: players.map((p, i) => ({
@@ -841,7 +839,7 @@ export default function LocalDraft() {
                   const names = players.map(p => p.playerName || '');
                   const newPlayers = players.map(() => emptyDraft());
                   names.forEach((n, i) => { newPlayers[i].playerName = n; });
-                  
+
                   setPlayers(newPlayers);
                   setBans(players.map(() => []));
                   setDraftPhase('banning');
@@ -871,21 +869,20 @@ export default function LocalDraft() {
           bottomPhase="Phase 2"
           bottomTitle="COMMENCE DRAFTING"
           onPhaseSwap={() => setDraftPhase('drafting')}
-          onComplete={() => setActiveOverlay(null)} 
+          onComplete={() => setActiveOverlay(null)}
         />
       )}
-      
+
       {activeOverlay === 'clash' && (
-        <CursedConvergenceTransition 
+        <CursedConvergenceTransition
           players={players}
           onPhaseSwap={() => setDraftPhase('comparing')}
-          onComplete={() => setActiveOverlay(null)} 
+          onComplete={() => setActiveOverlay(null)}
         />
       )}
 
       {/* Help Modal */}
       <HelpPage isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
-      <FeedbackSystem />
 
       {/* Floating Help Button - Only on start screen */}
       {draftPhase === 'start' && (

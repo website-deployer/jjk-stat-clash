@@ -10,7 +10,6 @@ import { Swords, Ban, CheckCircle2, Trophy, Clock, Cpu, ArrowLeft, Dices, Sparkl
 import { Link, useNavigate } from 'react-router-dom';
 import { getBotPick } from '../utils/botLogic';
 import { Helmet } from 'react-helmet-async';
-import { Helmet } from 'react-helmet-async';
 
 const TURN_TIME_SECONDS = 30;
 
@@ -30,7 +29,7 @@ export default function BotDraft() {
     0: { remainingTotal: 50, remainingLucky: 10, statRolls: {} },
     1: { remainingTotal: 50, remainingLucky: 10, statRolls: {} }
   });
-  
+
   const [players, setPlayers] = useState<DraftSelection[]>([emptyDraft(), emptyDraft()]);
   const [draftPhase, setDraftPhase] = useState<'setup' | 'banning' | 'drafting' | 'comparing' | 'transitioning'>('setup');
   const [bans, setBans] = useState<string[][]>([[], []]);
@@ -65,7 +64,7 @@ export default function BotDraft() {
       const delay = 1000 + Math.random() * 2000;
       const botTimer = setTimeout(() => {
         executeBotTurn();
-      }, delay); 
+      }, delay);
       return () => clearTimeout(botTimer);
     }
 
@@ -86,7 +85,7 @@ export default function BotDraft() {
 
   const executeBotTurn = () => {
     if (!difficulty) return;
-    
+
     if (draftMode === 'gamble') {
       // Bot gamble logic
       const emptyStats = statsList.filter(stat => !players[1][stat]);
@@ -94,10 +93,10 @@ export default function BotDraft() {
         passTurn();
         return;
       }
-      
+
       const statToRoll = emptyStats[Math.floor(Math.random() * emptyStats.length)];
       const currentState = gambleStates[1];
-      
+
       // Bot decided whether to use lucky roll (Hard bot uses it more wisely)
       let useLucky = false;
       if (currentState.remainingLucky > 0) {
@@ -110,7 +109,7 @@ export default function BotDraft() {
           useLucky = Math.random() < 0.1;
         }
       }
-      
+
       handleGambleRoll(1, statToRoll, useLucky);
       return;
     }
@@ -124,7 +123,7 @@ export default function BotDraft() {
 
     const globalBans = bans.flat().filter(Boolean);
     const pick = getBotPick(difficulty, players[1], [players[0]], globalBans, takenIds);
-    
+
     if (pick) {
       handleSelect(1, pick.stat, pick.id);
     } else {
@@ -136,7 +135,7 @@ export default function BotDraft() {
   const handleGambleRoll = (playerIndex: number, stat: string, isLucky: boolean) => {
     const currentState = gambleStates[playerIndex];
     if (!currentState) return;
-    
+
     const isVow = stat === 'bindingVow';
     if (!isVow && currentState.remainingTotal <= 0) return;
     if ((currentState.statRolls[stat] || 0) >= gambleConfig.rollsPerStat) return;
@@ -144,7 +143,7 @@ export default function BotDraft() {
 
     const draft = players[playerIndex];
     const category = stat === 'bindingVow' ? 'bindingVow' : (statCategoryMap[stat] || 'character');
-    
+
     const selectedIds = new Set<string>();
     players.forEach(d => {
       Object.values(d).forEach(id => { if (typeof id === 'string') selectedIds.add(id); });
@@ -172,13 +171,13 @@ export default function BotDraft() {
         else if (grade === 'Legendary') pwr += 50;
         return pwr;
       };
-      
+
       const sorted = [...available].sort((a, b) => getEntityPower(b) - getEntityPower(a));
       available = sorted.slice(0, Math.max(1, Math.ceil(sorted.length * 0.3)));
     }
 
     const randomEntity = available[Math.floor(Math.random() * available.length)];
-    
+
     const newGambleStates = { ...gambleStates };
     newGambleStates[playerIndex] = {
       ...currentState,
@@ -212,7 +211,7 @@ export default function BotDraft() {
       Object.values(draft).forEach(id => { if (typeof id === 'string') takenIds.add(id); });
     });
     const globalBans = bans.flat().filter(Boolean);
-    
+
     const emptyStats = statsList.filter(stat => !players[pIndex][stat]);
     if (emptyStats.length === 0) {
       passTurn();
@@ -221,7 +220,7 @@ export default function BotDraft() {
 
     const randomStat = emptyStats[Math.floor(Math.random() * emptyStats.length)];
     const category = statCategoryMap[randomStat] || 'character';
-    
+
     const available = characters.filter(entity => {
       if (entity.category !== category) return false;
       if (globalBans.includes(entity.id)) return false;
@@ -259,7 +258,7 @@ export default function BotDraft() {
   const handleSelect = (playerIndex: number, stat: string, entityId: string) => {
     // Only allow selection if it's that player's turn
     if (playerIndex !== activePlayer) return;
-    
+
     // Prevent changing selection once made
     if (players[playerIndex][stat]) return;
 
@@ -276,7 +275,7 @@ export default function BotDraft() {
       Object.values(d).forEach(id => { if (typeof id === 'string') selectedIds.add(id); });
     });
     const globalBans = bans.flat().filter(Boolean);
-    
+
     return characters.filter(entity => {
       if (entity.category !== category) return false;
       if (globalBans.includes(entity.id) && entity.id !== currentSelectedId) return false;
@@ -299,7 +298,7 @@ export default function BotDraft() {
         </button>
 
         <div className="z-10 flex flex-col items-center w-full max-w-6xl">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
@@ -312,28 +311,28 @@ export default function BotDraft() {
           {!difficulty ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
               {[
-                { 
-                  id: 'easy', 
-                  title: 'Grade 4', 
-                  desc: 'Randomized drafting. For beginners.', 
+                {
+                  id: 'easy',
+                  title: 'Grade 4',
+                  desc: 'Randomized drafting. For beginners.',
                   icon: <Shield className="text-green-500" size={32} />,
                   color: 'border-green-500/20 hover:border-green-500 text-green-500',
                   bg: 'hover:bg-green-500/5',
                   glow: 'rgba(34,197,94,0.2)'
                 },
-                { 
-                  id: 'medium', 
-                  title: 'Grade 1', 
-                  desc: 'Prioritizes high stats and character grades.', 
+                {
+                  id: 'medium',
+                  title: 'Grade 1',
+                  desc: 'Prioritizes high stats and character grades.',
                   icon: <AlertTriangle className="text-yellow-500" size={32} />,
                   color: 'border-yellow-500/20 hover:border-yellow-500 text-yellow-500',
                   bg: 'hover:bg-yellow-500/5',
                   glow: 'rgba(234,179,8,0.2)'
                 },
-                { 
-                  id: 'hard', 
-                  title: 'Special Grade', 
-                  desc: 'Hate drafting & complex synergy completion.', 
+                {
+                  id: 'hard',
+                  title: 'Special Grade',
+                  desc: 'Hate drafting & complex synergy completion.',
                   icon: <Skull className="text-red-500" size={32} />,
                   color: 'border-red-500/20 hover:border-red-500 text-red-500',
                   bg: 'hover:bg-red-500/5',
@@ -362,12 +361,12 @@ export default function BotDraft() {
               ))}
             </div>
           ) : (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center w-full max-w-2xl bg-zinc-900/50 border border-zinc-800 p-12 rounded-[2rem] backdrop-blur-xl relative"
             >
-              <button 
+              <button
                 onClick={() => setDifficulty(null)}
                 className="absolute top-6 left-6 text-zinc-600 hover:text-white transition-colors"
               >
@@ -375,11 +374,10 @@ export default function BotDraft() {
               </button>
 
               <div className="flex items-center gap-4 mb-8">
-                 <div className={`w-3 h-3 rounded-full animate-pulse ${
-                   difficulty === 'easy' ? 'bg-green-500' : 
-                   difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                 }`}></div>
-                 <span className="text-zinc-400 font-mono text-xs uppercase tracking-[0.3em]">Difficulty: {difficulty}</span>
+                <div className={`w-3 h-3 rounded-full animate-pulse ${difficulty === 'easy' ? 'bg-green-500' :
+                    difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}></div>
+                <span className="text-zinc-400 font-mono text-xs uppercase tracking-[0.3em]">Difficulty: {difficulty}</span>
               </div>
 
               <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-12">Select Engagement Mode</h2>
@@ -421,7 +419,7 @@ export default function BotDraft() {
             <span className={`text-xs font-mono font-bold px-3 py-1 rounded ${activePlayer === 0 ? 'bg-blue-500/20 text-blue-500 border border-blue-500/50 animate-pulse' : 'text-zinc-500'}`}>HUMAN TURN</span>
             <span className={`text-xs font-mono font-bold px-3 py-1 rounded ${activePlayer === 1 ? 'bg-red-500/20 text-red-500 border border-red-500/50 animate-pulse' : 'text-zinc-500'}`}>BOT TURN</span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Clock className={timeLeft <= 5 && activePlayer === 0 ? 'text-red-500 animate-bounce' : 'text-zinc-400'} size={20} />
             <span className={`text-2xl font-mono font-black ${timeLeft <= 5 && activePlayer === 0 ? 'text-red-500' : 'text-white'}`}>00:{timeLeft.toString().padStart(2, '0')}</span>
@@ -432,7 +430,7 @@ export default function BotDraft() {
       <main className="max-w-7xl mx-auto px-4 py-12 flex flex-col items-center">
         {draftPhase === 'banning' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center w-full">
-             <h2 className="text-4xl font-black text-red-500 uppercase tracking-widest mb-12 flex items-center gap-3">
+            <h2 className="text-4xl font-black text-red-500 uppercase tracking-widest mb-12 flex items-center gap-3">
               <Ban size={36} /> Ban Phase
             </h2>
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 w-full max-w-md">
@@ -442,7 +440,7 @@ export default function BotDraft() {
                 const options = characters
                   .filter(c => !currentBans.includes(c.id) || bans[0][bIndex] === c.id)
                   .map(c => ({ value: c.id, label: c.name, grade: c.grade }));
-                  
+
                 return (
                   <div key={bIndex} className="mb-4">
                     <SearchableSelect
@@ -451,15 +449,15 @@ export default function BotDraft() {
                       onChange={(val: string) => {
                         const newBans = [...bans];
                         newBans[0][bIndex] = val;
-                        
+
                         // Auto-assign bot ban if slot is empty or changing
                         if (!newBans[1][bIndex] || newBans[1][bIndex] === val) {
-                           const currentBansAll = newBans.flat().filter(Boolean);
-                           const available = characters.filter(c => !currentBansAll.includes(c.id));
-                           if (available.length > 0) {
-                             const randomBan = available[Math.floor(Math.random() * available.length)].id;
-                             newBans[1][bIndex] = randomBan;
-                           }
+                          const currentBansAll = newBans.flat().filter(Boolean);
+                          const available = characters.filter(c => !currentBansAll.includes(c.id));
+                          if (available.length > 0) {
+                            const randomBan = available[Math.floor(Math.random() * available.length)].id;
+                            newBans[1][bIndex] = randomBan;
+                          }
                         }
                         setBans(newBans);
                       }}
@@ -494,8 +492,8 @@ export default function BotDraft() {
                     playerNum={index + 1}
                     draft={draft}
                     onSelect={(stat, entityId) => handleSelect(index, stat, entityId)}
-                    onNameChange={() => {}}
-                    onRemove={() => {}}
+                    onNameChange={() => { }}
+                    onRemove={() => { }}
                     canRemove={false}
                     getAvailableEntities={getAvailableEntities}
                     allEntities={characters}
@@ -508,61 +506,61 @@ export default function BotDraft() {
               ))}
             </div>
 
-            <SystemProtocol 
-               onClash={() => setDraftPhase('transitioning')}
-               showClashButton={allSelected}
+            <SystemProtocol
+              onClash={() => setDraftPhase('transitioning')}
+              showClashButton={allSelected}
             />
 
             {!allSelected && activePlayer === 0 && (
-               <div className="mt-8 flex flex-col items-center gap-4">
-                 <div className="text-zinc-500 font-mono text-xs animate-pulse tracking-widest uppercase">
-                   Your Turn - {draftMode === 'gamble' ? 'Roll for a category' : 'Select a category to draft'}
-                 </div>
-                 {draftMode === 'gamble' && (
-                   <div className="flex items-center gap-6 bg-zinc-900/50 border border-zinc-800 px-6 py-3 rounded-full">
-                     <div className="flex items-center gap-2">
-                       <Dices size={16} className="text-zinc-400" />
-                       <span className="text-[10px] font-mono text-zinc-500 uppercase">Rolls: {gambleStates[0].remainingTotal}</span>
-                     </div>
-                     <div className="flex items-center gap-2">
-                       <Sparkles size={16} className="text-yellow-500" />
-                       <span className="text-[10px] font-mono text-yellow-500 uppercase tracking-tighter">Lucky: {gambleStates[0].remainingLucky}</span>
-                     </div>
-                   </div>
-                 )}
-               </div>
+              <div className="mt-8 flex flex-col items-center gap-4">
+                <div className="text-zinc-500 font-mono text-xs animate-pulse tracking-widest uppercase">
+                  Your Turn - {draftMode === 'gamble' ? 'Roll for a category' : 'Select a category to draft'}
+                </div>
+                {draftMode === 'gamble' && (
+                  <div className="flex items-center gap-6 bg-zinc-900/50 border border-zinc-800 px-6 py-3 rounded-full">
+                    <div className="flex items-center gap-2">
+                      <Dices size={16} className="text-zinc-400" />
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase">Rolls: {gambleStates[0].remainingTotal}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-yellow-500" />
+                      <span className="text-[10px] font-mono text-yellow-500 uppercase tracking-tighter">Lucky: {gambleStates[0].remainingLucky}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
 
         <AnimatePresence>
           {draftPhase === 'transitioning' && (
-             <CursedConvergenceTransition 
-               players={players} 
-               onPhaseSwap={() => setDraftPhase('comparing')}
-               onComplete={() => {}} 
-             />
+            <CursedConvergenceTransition
+              players={players}
+              onPhaseSwap={() => setDraftPhase('comparing')}
+              onComplete={() => { }}
+            />
           )}
         </AnimatePresence>
 
         {draftPhase === 'comparing' && (
           <div className="w-full flex justify-center pb-24 relative z-20">
-            <Comparison 
-              players={players} 
+            <Comparison
+              players={players}
               roundWins={roundWins}
               onReset={(winners, finalScores) => {
-                 const newWins = [...roundWins];
-                 winners.forEach(w => newWins[w]++);
-                 setRoundWins(newWins);
-                 setPlayers([emptyDraft(), emptyDraft()]);
-                 setBans([[], []]);
-                 setGambleStates({
-                   0: { remainingTotal: gambleConfig.totalRolls, remainingLucky: gambleConfig.luckyRolls, statRolls: {} },
-                   1: { remainingTotal: gambleConfig.totalRolls, remainingLucky: gambleConfig.luckyRolls, statRolls: {} }
-                 });
-                 setDraftPhase('setup');
-                 setActivePlayer(0);
-                 setTimeLeft(TURN_TIME_SECONDS);
+                const newWins = [...roundWins];
+                winners.forEach(w => newWins[w]++);
+                setRoundWins(newWins);
+                setPlayers([emptyDraft(), emptyDraft()]);
+                setBans([[], []]);
+                setGambleStates({
+                  0: { remainingTotal: gambleConfig.totalRolls, remainingLucky: gambleConfig.luckyRolls, statRolls: {} },
+                  1: { remainingTotal: gambleConfig.totalRolls, remainingLucky: gambleConfig.luckyRolls, statRolls: {} }
+                });
+                setDraftPhase('setup');
+                setActivePlayer(0);
+                setTimeLeft(TURN_TIME_SECONDS);
               }}
             />
           </div>
