@@ -21,7 +21,7 @@ export default class DraftServer implements PartyServer {
 
   timerInterval: ReturnType<typeof setInterval> | null = null;
 
-  onRequest(req: Request) {
+  onRequest(req: Party.Request) {
     return new Response("JJK Stat Clash Party Server is online.", { status: 200 });
   }
 
