@@ -31,6 +31,7 @@ export default function App() {
 }
 
 function FeedbackSwitcher() {
-  const isHome = window.location.pathname === '/';
-  return <FeedbackSystem hidden={!isHome} />;
+  const path = window.location.pathname;
+  const isGameHub = path === '/' || path === '/play' || path.startsWith('/play/');
+  return <FeedbackSystem hidden={!isGameHub} />;
 }

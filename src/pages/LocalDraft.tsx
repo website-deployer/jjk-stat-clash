@@ -773,17 +773,6 @@ export default function LocalDraft() {
                 ))}
               </div>
 
-              {allSelected && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  onClick={() => setActiveOverlay('clash')}
-                  className="bg-red-600 hover:bg-red-700 text-white font-black font-display py-5 px-16 rounded-full text-2xl uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all hover:scale-105 flex items-center gap-4"
-                >
-                  <Swords size={32} />
-                  Clash!
-                </motion.button>
-              )}
 
               <SystemProtocol
                 onClash={() => setActiveOverlay('clash')}
