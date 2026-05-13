@@ -1,4 +1,4 @@
-import type { Party, PartyServer, Connection, Request, Response } from "partykit/server";
+import type { Party, PartyServer, Connection, Request } from "partykit/server";
 
 export default class DraftServer implements PartyServer {
   constructor(readonly party: Party) {}
@@ -21,7 +21,7 @@ export default class DraftServer implements PartyServer {
 
   timerInterval: ReturnType<typeof setInterval> | null = null;
 
-  onRequest(req: Request) {
+  onRequest(req: any): any {
     return new Response("JJK Stat Clash Party Server is online.", { status: 200 });
   }
 
