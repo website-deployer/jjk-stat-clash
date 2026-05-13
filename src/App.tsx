@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -31,7 +31,8 @@ export default function App() {
 }
 
 function FeedbackSwitcher() {
-  const path = window.location.pathname;
+  const location = useLocation();
+  const path = location.pathname;
   const isGameHub = path === '/' || path === '/play' || path.startsWith('/play/');
   return <FeedbackSystem hidden={!isGameHub} />;
 }
