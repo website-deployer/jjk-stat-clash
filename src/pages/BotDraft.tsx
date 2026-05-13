@@ -39,7 +39,7 @@ export default function BotDraft() {
   // Turn-based State
   const [activePlayer, setActivePlayer] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(TURN_TIME_SECONDS);
-  const [activeOverlay, setActiveOverlay] = useState<'ban' | 'clash' | 'startToBan' | 'gambleConfig' | null>(null);
+  const [activeOverlay, setActiveOverlay] = useState<'ban' | 'clash' | 'startToBan' | 'startToDraft' | 'banToDraft' | 'transitioning' | 'gambleConfig' | null>(null);
 
   // Initialize
   useEffect(() => {
