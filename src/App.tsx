@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
+import { AnimatePresence } from 'motion/react';
 
 // Import Pages
 import Home from './pages/Home';
@@ -33,6 +34,13 @@ export default function App() {
 function FeedbackSwitcher() {
   const location = useLocation();
   const path = location.pathname;
-  const isGameHub = path === '/' || path === '/play' || path.startsWith('/play/');
-  return <FeedbackSystem hidden={!isGameHub} />;
+  // ONLY show on Home page ('/') or the main Play hub ('/play')
+  // Hide everywhere else (inside specific draft modes or admin routes)
+  const isVisible = path === '/' || path === '/play';
+  
+  return (
+    <AnimatePresence>
+      {isVisible && <FeedbackSystem key="feedback-system" />}
+    </AnimatePresence>
+  );
 }

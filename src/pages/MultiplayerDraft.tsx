@@ -23,7 +23,7 @@ export default function MultiplayerDraft() {
 
   // Connect to PartyKit using the room ID
   const socket = usePartySocket({
-    host: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'localhost:1999' : 'jjk-stat-clash.partykit.dev',
+    host: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'localhost:1999' : 'jjk-stat-clash.website-deployer.partykit.dev',
     room: roomId || 'default',
     onOpen: () => {
       setConnectionError(false);
