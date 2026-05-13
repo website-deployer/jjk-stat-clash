@@ -34,9 +34,13 @@ export default function App() {
 function FeedbackSwitcher() {
   const location = useLocation();
   const path = location.pathname;
-  // ONLY show on Home page ('/') or the main Play hub ('/play')
-  // Hide everywhere else (inside specific draft modes or admin routes)
-  const isVisible = path === '/' || path === '/play';
+  
+  // HIDE if inside any draft or game mode
+  const isPlaying = path.startsWith('/play/local') || 
+                    path.startsWith('/play/bot') || 
+                    path.startsWith('/play/multiplayer/draft');
+                    
+  const isVisible = !isPlaying;
   
   return (
     <AnimatePresence>
