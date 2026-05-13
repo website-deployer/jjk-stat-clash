@@ -384,7 +384,10 @@ export default function BotDraft() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <button
-                  onClick={() => { setDraftMode('normal'); setDraftPhase('banning'); }}
+                  onClick={() => { 
+                    setDraftMode('normal'); 
+                    setActiveOverlay('startToBan');
+                  }}
                   className="flex flex-col items-center p-8 bg-black/40 border border-zinc-800 rounded-2xl hover:border-blue-500 transition-all group"
                 >
                   <Target className="text-zinc-500 group-hover:text-blue-500 mb-4 transition-colors" size={32} />
@@ -393,7 +396,10 @@ export default function BotDraft() {
                 </button>
 
                 <button
-                  onClick={() => { setDraftMode('gamble'); setDraftPhase('drafting'); }}
+                  onClick={() => { 
+                    setDraftMode('gamble'); 
+                    setActiveOverlay('startToDraft');
+                  }}
                   className="flex flex-col items-center p-8 bg-black/40 border border-zinc-800 rounded-2xl hover:border-yellow-500 transition-all group"
                 >
                   <Dices className="text-zinc-500 group-hover:text-yellow-500 mb-4 transition-colors" size={32} />
@@ -468,7 +474,12 @@ export default function BotDraft() {
               })}
             </div>
             {bans[0].length === 2 && bans[0][1] && (
-              <button onClick={() => setDraftPhase('drafting')} className="mt-8 bg-red-600 px-8 py-3 rounded-full font-bold uppercase text-white hover:bg-red-700">Begin Draft</button>
+              <button 
+                onClick={() => setActiveOverlay('banToDraft')} 
+                className="mt-8 bg-red-600 px-8 py-3 rounded-full font-bold uppercase text-white hover:bg-red-700"
+              >
+                Begin Draft
+              </button>
             )}
           </motion.div>
         )}
@@ -533,6 +544,39 @@ export default function BotDraft() {
         )}
 
         <AnimatePresence>
+          {activeOverlay === 'startToBan' && (
+            <PhaseTransition
+              key="startToBan"
+              topKanji="拒否"
+              topEnglish="REJECTION PHASE"
+              bottomPhase="PHASE 01"
+              bottomTitle="BAN SELECTION"
+              onPhaseSwap={() => setDraftPhase('banning')}
+              onComplete={() => setActiveOverlay(null)}
+            />
+          )}
+          {activeOverlay === 'startToDraft' && (
+            <PhaseTransition
+              key="startToDraft"
+              topKanji="運命"
+              topEnglish="DESTINY PHASE"
+              bottomPhase="PHASE 02"
+              bottomTitle="CURSED LOTTERY"
+              onPhaseSwap={() => setDraftPhase('drafting')}
+              onComplete={() => setActiveOverlay(null)}
+            />
+          )}
+          {activeOverlay === 'banToDraft' && (
+            <PhaseTransition
+              key="banToDraft"
+              topKanji="呪術"
+              topEnglish="SORCERY PHASE"
+              bottomPhase="PHASE 02"
+              bottomTitle="DRAFT SELECTION"
+              onPhaseSwap={() => setDraftPhase('drafting')}
+              onComplete={() => setActiveOverlay(null)}
+            />
+          )}
           {draftPhase === 'transitioning' && (
             <CursedConvergenceTransition
               players={players}

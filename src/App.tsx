@@ -33,18 +33,11 @@ export default function App() {
 
 function FeedbackSwitcher() {
   const location = useLocation();
-  const path = location.pathname;
-  
-  // HIDE if inside any draft or game mode
-  const isPlaying = path.startsWith('/play/local') || 
-                    path.startsWith('/play/bot') || 
-                    path.startsWith('/play/multiplayer/draft');
-                    
-  const isVisible = !isPlaying;
+  const isPlayHub = location.pathname === '/play';
   
   return (
     <AnimatePresence>
-      {isVisible && <FeedbackSystem key="feedback-system" />}
+      {isPlayHub && <FeedbackSystem key="feedback-system" />}
     </AnimatePresence>
   );
 }

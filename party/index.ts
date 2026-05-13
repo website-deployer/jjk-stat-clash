@@ -233,7 +233,7 @@ export default class DraftServer implements PartyServer {
     this.timerInterval = setInterval(() => {
       this.state.timeLeft--;
       if (this.state.timeLeft <= 0) {
-        this.advanceTurn();
+        this.autoPickForActivePlayer();
       } else {
         this.party.broadcast(JSON.stringify({ type: 'timer', timeLeft: this.state.timeLeft }));
       }
@@ -263,6 +263,35 @@ export default class DraftServer implements PartyServer {
     this.state.activePlayer = nextPlayer;
     this.state.timeLeft = 30;
     this.broadcastState();
+    this.startTimer();
+  }
+
+  autoPickForActivePlayer() {
+    const pIndex = this.state.activePlayer;
+    const player = this.state.players[pIndex];
+    if (!player) return this.advanceTurn();
+
+    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
+    const emptyStat = statsList.find(s => player.draft[s] === null);
+
+    if (!emptyStat) return this.advanceTurn();
+
+    if (this.state.draftMode === 'gamble') {
+      const gState = this.state.gambleStates[player.id];
+      const charIds = ["yuji-itadori", "megumi-fushiguro", "nobara-kugisaki", "satoru-gojo", "kento-nanami", "maki-zenin", "toge-inumaki", "panda", "aoi-todo", "mai-zenin", "kasumi-miwa", "kokichi-muta", "momo-nishimiya", "noritoshi-kamo", "utahime-iori", "mei-mei", "naobito-zenin", "choso", "eso", "kechizu", "mahito", "jogo", "hanami", "dagon", "geto-suguru", "toji-fushiguro", "ryomen-sukuna"];
+      const randomId = charIds[Math.floor(Math.random() * charIds.length)];
+      
+      this.state.gambleStates[player.id] = {
+        ...gState,
+        remainingTotal: gState.remainingTotal - 1,
+        statRolls: { ...gState.statRolls, [emptyStat]: (gState.statRolls[emptyStat] || 0) + 1 }
+      };
+      player.draft[emptyStat] = randomId;
+    } else {
+      player.draft[emptyStat] = "yuji-itadori";
+    }
+
+    this.advanceTurn();
   }
 
   broadcastState() {
