@@ -20,6 +20,7 @@ export default function MultiplayerDraft() {
   const [copied, setCopied] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
   const [banError, setBanError] = useState<string | null>(null);
+  const [localActiveRollingStat, setLocalActiveRollingStat] = useState<string | null>(null);
 
   // Connect to PartyKit using the room ID
   const socket = usePartySocket({
@@ -94,6 +95,8 @@ export default function MultiplayerDraft() {
     const gState = gameState.gambleStates[socket.id];
     if (!gState) return;
 
+    if ((gameState.currentRollingStat || localActiveRollingStat) && (gameState.currentRollingStat || localActiveRollingStat) !== stat) return;
+
     const isVow = stat === 'bindingVow';
     if (!isVow && gState.remainingTotal <= 0) return;
     if (isLucky && gState.remainingLucky <= 0) return;
@@ -112,7 +115,8 @@ export default function MultiplayerDraft() {
         if (entity.statValue) pwr = entity.statValue;
         else if (entity.stats && entity.stats[stat]) pwr = entity.stats[stat];
         const grade = entity.grade || '';
-        if (grade === 'Mythic') pwr += 100;
+        if (grade === 'Calamity') pwr += 200;
+        else if (grade === 'Mythic') pwr += 100;
         else if (grade === 'Legendary') pwr += 50;
         else if (grade === 'Epic') pwr += 30;
         else if (grade === 'Rare') pwr += 15;
@@ -123,7 +127,13 @@ export default function MultiplayerDraft() {
     }
 
     const randomEntity = available[Math.floor(Math.random() * available.length)];
+    setLocalActiveRollingStat(stat);
     socket.send(JSON.stringify({ type: 'gambleRoll', stat, entityId: randomEntity.id, isLucky }));
+  };
+
+  const handleFinishGambleTurn = () => {
+    setLocalActiveRollingStat(null);
+    socket.send(JSON.stringify({ type: 'finishGambleTurn' }));
   };
 
   // Auto-pick on timeout
@@ -253,11 +263,11 @@ export default function MultiplayerDraft() {
                   <div className="flex flex-col gap-2">
                     <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">Match Capacity</p>
                     <div className="flex justify-center gap-4">
-                      {[2, 4, 8].map(num => (
+                      {[2, 3, 4, 5, 6, 7, 8].map(num => (
                         <button
                           key={num}
                           onClick={() => setMaxPlayers(num)}
-                          className={`px-4 py-2 rounded-lg font-bold font-mono text-xs transition-colors ${gameState.maxPlayers === num ? 'bg-yellow-500 text-black' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
+                          className={`px-3 py-2 rounded-lg font-bold font-mono text-[10px] transition-colors ${gameState.maxPlayers === num ? 'bg-yellow-500 text-black' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
                         >
                           {num} P
                         </button>
@@ -279,6 +289,44 @@ export default function MultiplayerDraft() {
                       ))}
                     </div>
                   </div>
+
+                  {gameState.draftMode === 'gamble' && (
+                    <div className="flex flex-col gap-3 mt-2 bg-black/40 p-4 rounded-xl border border-yellow-500/20">
+                      <p className="text-[10px] text-yellow-500 font-mono uppercase tracking-widest mb-1 text-left">Cursed Lottery Config</p>
+                      
+                      <div className="flex flex-col gap-1 text-left">
+                        <div className="flex justify-between items-end">
+                          <label className="text-[10px] text-zinc-400 font-mono uppercase">Global Roll Pool</label>
+                          <span className="text-xs font-bold text-yellow-500">{gameState.gambleConfig.totalRolls}</span>
+                        </div>
+                        <input type="range" min="10" max="300" step="5" value={gameState.gambleConfig.totalRolls} onChange={e => {
+                          const val = +e.target.value;
+                          socket.send(JSON.stringify({ type: 'updateGambleConfig', config: { ...gameState.gambleConfig, totalRolls: val, rollsPerStat: Math.min(gameState.gambleConfig.rollsPerStat, Math.floor(val / 10)) } }));
+                        }} className="w-full accent-yellow-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-left mt-2">
+                        <div className="flex justify-between items-end">
+                          <label className="text-[10px] text-zinc-400 font-mono uppercase">Jackpot Rolls</label>
+                          <span className="text-xs font-bold text-yellow-400">{gameState.gambleConfig.luckyRolls}</span>
+                        </div>
+                        <input type="range" min="0" max={Math.min(50, gameState.gambleConfig.totalRolls)} step="1" value={gameState.gambleConfig.luckyRolls} onChange={e => {
+                          socket.send(JSON.stringify({ type: 'updateGambleConfig', config: { ...gameState.gambleConfig, luckyRolls: +e.target.value } }));
+                        }} className="w-full accent-yellow-400 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-left mt-2">
+                        <div className="flex justify-between items-end">
+                          <label className="text-[10px] text-zinc-400 font-mono uppercase">Category Limit</label>
+                          <span className="text-xs font-bold text-red-500">{gameState.gambleConfig.rollsPerStat}</span>
+                        </div>
+                        <input type="range" min="1" max="30" step="1" value={gameState.gambleConfig.rollsPerStat} onChange={e => {
+                          const val = +e.target.value;
+                          socket.send(JSON.stringify({ type: 'updateGambleConfig', config: { ...gameState.gambleConfig, rollsPerStat: val, totalRolls: Math.max(gameState.gambleConfig.totalRolls, val * 10) } }));
+                        }} className="w-full accent-red-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     onClick={() => socket.send(JSON.stringify({ type: 'startGame' }))}
@@ -475,6 +523,9 @@ export default function MultiplayerDraft() {
                     gambleState={gameState.gambleStates?.[p.id]}
                     gambleConfig={gameState.gambleConfig}
                     onGambleRoll={(stat, isLucky) => handleGambleRoll(stat, isLucky)}
+                    isTurn={gameState.activePlayer === index}
+                    activeRollingStat={gameState.currentRollingStat || localActiveRollingStat}
+                    onFinishGambleTurn={handleFinishGambleTurn}
                   />
                   {myIndex === index && (
                     <div className="absolute -top-3 -right-3 bg-green-500 text-black font-black text-[10px] px-2 py-1 rounded-full uppercase z-50">YOU</div>
@@ -522,6 +573,9 @@ export default function MultiplayerDraft() {
                  <SystemProtocol />
               </div>
             )}
+
+            <AnimatePresence>
+            </AnimatePresence>
           </div>
         )}
 
@@ -545,11 +599,9 @@ export default function MultiplayerDraft() {
               players={gameState.players.map((p: any) => p.draft)} 
               roundWins={gameState.roundWins}
               onReset={(winners) => {
+                socket.send(JSON.stringify({ type: 'readyToReset' }));
                 if (isHost) {
                   socket.send(JSON.stringify({ type: 'recordWin', winners }));
-                  setTimeout(() => {
-                    socket.send(JSON.stringify({ type: 'resetGame' }));
-                  }, 100);
                 }
               }}
             />

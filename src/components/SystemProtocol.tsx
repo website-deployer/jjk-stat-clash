@@ -12,6 +12,7 @@ interface SystemProtocolProps {
 export const SystemProtocol: React.FC<SystemProtocolProps> = ({ onClash, showClashButton }) => {
   const [hoveredSynergy, setHoveredSynergy] = useState<any>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     setTooltipPos({ x: e.clientX + 20, y: e.clientY + 20 });
@@ -26,15 +27,29 @@ export const SystemProtocol: React.FC<SystemProtocolProps> = ({ onClash, showCla
       <div className="relative z-10">
         {showClashButton && onClash && (
           <div className="flex justify-center mb-12">
-            <motion.button
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={onClash}
-              className="bg-red-600 hover:bg-red-700 text-white font-black font-display py-5 px-16 rounded-full text-2xl uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all hover:scale-105 flex items-center gap-4"
-            >
-              <Swords size={32} />
-              Clash!
-            </motion.button>
+            {!showConfirm ? (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => setShowConfirm(true)}
+                className="bg-red-600 hover:bg-red-700 text-white font-black font-display py-5 px-16 rounded-full text-2xl uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all hover:scale-105 flex items-center gap-4"
+              >
+                <Swords size={32} />
+                Clash!
+              </motion.button>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center gap-4 bg-red-950/40 p-6 rounded-2xl border border-red-500/30 backdrop-blur-sm"
+              >
+                <p className="text-xl font-black font-display text-white uppercase tracking-widest text-center">Are all sorcerers ready?</p>
+                <div className="flex gap-4">
+                  <button onClick={onClash} className="px-8 py-3 bg-red-600 text-white font-bold uppercase tracking-widest rounded-xl hover:bg-red-500 transition-colors shadow-[0_0_20px_rgba(220,38,38,0.3)]">Yes, Clash!</button>
+                  <button onClick={() => setShowConfirm(false)} className="px-8 py-3 bg-zinc-800 text-zinc-300 font-bold uppercase tracking-widest rounded-xl hover:bg-zinc-700 hover:text-white transition-colors">Wait</button>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Entity, CharacterStats, statLabels, statsList, statCategoryMap, pairings } from '../data/characters';
-import { Trash2, ChevronDown, Zap, Search, X } from 'lucide-react';
+import { Trash2, ChevronDown, Zap, Search, X, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type DraftSelection = Record<string, string | null>;
@@ -46,6 +46,10 @@ const statKanji: Record<string, string> = {
 export const getRarityConfig = (entity: any) => {
    if (!entity) return { label: 'UNKNOWN', tier: '', color: 'text-zinc-500', badgeTheme: 'bg-zinc-800 text-zinc-500', border: 'border-zinc-700', bg: 'bg-zinc-900', effects: '' };
    const grade = entity.grade || 'Common';
+
+   if (grade === 'Calamity') {
+       return { label: 'CALAMITY', tier: 'EX', color: 'text-indigo-400', badgeTheme: 'bg-black text-indigo-400 border border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.8)]', border: 'border-indigo-500', bg: 'bg-indigo-950/40', effects: 'shadow-[0_0_40px_rgba(99,102,241,0.8)] animate-pulse border-2 ring-4 ring-indigo-500/50' };
+   }
 
    if (grade === 'Mythic') {
        return { label: 'MYTHIC', tier: 'S', color: 'text-red-500', badgeTheme: 'bg-red-600 text-white', border: 'border-red-600', bg: 'bg-red-950/40', effects: 'shadow-[0_0_30px_rgba(220,38,38,0.8)] animate-pulse border-2 ring-2 ring-red-500/50' };
@@ -307,9 +311,12 @@ interface PlayerCardProps {
   gambleConfig?: { totalRolls: number; luckyRolls: number; rollsPerStat: number };
   onGambleRoll?: (stat: string, isLucky: boolean) => void;
   lockOnSelect?: boolean;
+  isTurn?: boolean;
+  activeRollingStat?: string | null;
+  onFinishGambleTurn?: () => void;
 }
 
-export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove, canRemove, getAvailableEntities, allEntities, draftMode, gambleState, gambleConfig, onGambleRoll, lockOnSelect }: PlayerCardProps) {
+export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove, canRemove, getAvailableEntities, allEntities, draftMode, gambleState, gambleConfig, onGambleRoll, lockOnSelect, isTurn, activeRollingStat, onFinishGambleTurn }: PlayerCardProps) {
   const colorTheme = playerColors[playerNum] || playerColors[1];
   const [rollingStats, setRollingStats] = useState<Record<string, boolean>>({});
   
@@ -350,13 +357,25 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
       </div>
       
       <div className="flex justify-between items-center mb-1 gap-2 relative z-10 w-full mb-4">
-        <input
-          type="text"
-          placeholder={`Player ${playerNum}`}
-          value={draft.playerName || ''}
-          onChange={(e) => onNameChange(e.target.value)}
-          className={`bg-transparent border-b-2 border-transparent hover:border-zinc-800 focus:border-red-500 outline-none text-3xl font-black ${colorTheme.text} font-display uppercase tracking-wider w-full placeholder:text-zinc-800 transition-colors truncate pb-1`}
-        />
+        <div className="flex flex-col">
+          <input
+            type="text"
+            placeholder={`Player ${playerNum}`}
+            value={draft.playerName || ''}
+            onChange={(e) => onNameChange(e.target.value)}
+            className={`bg-transparent border-b-2 border-transparent hover:border-zinc-800 focus:border-red-500 outline-none text-3xl font-black ${colorTheme.text} font-display uppercase tracking-wider w-full placeholder:text-zinc-800 transition-colors truncate pb-1`}
+          />
+          {isTurn && (
+            <motion.div 
+              initial={{ x: -10, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className={`text-[10px] font-black uppercase tracking-[0.3em] ${colorTheme.text} mt-1 flex items-center gap-2`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${colorTheme.bg.replace('bg-', 'bg-').replace('/20', '')} animate-pulse`} />
+              Active Turn
+            </motion.div>
+          )}
+        </div>
         {draftMode === 'gamble' && gambleState && (
           <div className="flex flex-col items-end whitespace-nowrap text-xs font-mono">
             <span className="text-zinc-400 font-bold uppercase tracking-wider">Rolls: <span className="text-white">{gambleState.remainingTotal}</span></span>
@@ -435,21 +454,32 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
                       Awaiting Roll...
                     </div>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     <button 
-                      disabled={rollingStats[stat] || !gambleConfig || !gambleState || gambleState.remainingTotal <= 0 || (gambleState.statRolls[stat] || 0) >= gambleConfig.rollsPerStat || (requireRollsSafeguard && currentId !== null)}
+                      disabled={!isTurn || (activeRollingStat && activeRollingStat !== stat) || rollingStats[stat] || !gambleConfig || !gambleState || gambleState.remainingTotal <= 0 || (gambleState.statRolls[stat] || 0) >= gambleConfig.rollsPerStat || (requireRollsSafeguard && currentId !== null)}
                       onClick={() => handleRollClick(stat, false)}
-                      className="flex-1 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-700 disabled:cursor-not-allowed text-white font-bold text-xs py-1.5 rounded uppercase tracking-wider transition-colors relative overflow-hidden"
+                      className={`flex-1 ${isTurn && (!activeRollingStat || activeRollingStat === stat) ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-zinc-900/50 text-zinc-700'} disabled:cursor-not-allowed text-white font-bold text-xs py-1.5 rounded uppercase tracking-wider transition-colors relative overflow-hidden`}
                     >
                       {requireRollsSafeguard && currentId !== null ? 'Locked' : 'Roll'}
                     </button>
                     <button 
-                      disabled={rollingStats[stat] || !gambleConfig || !gambleState || gambleState.remainingTotal <= 0 || gambleState.remainingLucky <= 0 || (gambleState.statRolls[stat] || 0) >= gambleConfig.rollsPerStat || (requireRollsSafeguard && currentId !== null)}
+                      disabled={!isTurn || (activeRollingStat && activeRollingStat !== stat) || rollingStats[stat] || !gambleConfig || !gambleState || gambleState.remainingTotal <= 0 || gambleState.remainingLucky <= 0 || (gambleState.statRolls[stat] || 0) >= gambleConfig.rollsPerStat || (requireRollsSafeguard && currentId !== null)}
                       onClick={() => handleRollClick(stat, true)}
-                      className="flex-1 bg-yellow-600/20 hover:bg-yellow-500/30 border border-yellow-600/30 disabled:border-transparent disabled:bg-zinc-900 disabled:text-zinc-700 disabled:cursor-not-allowed text-yellow-500 font-bold text-xs py-1.5 rounded uppercase tracking-wider transition-colors"
+                      className={`flex-1 ${isTurn && (!activeRollingStat || activeRollingStat === stat) ? 'bg-yellow-600/20 hover:bg-yellow-500/30 border-yellow-600/30' : 'bg-zinc-900/50 text-zinc-700 border-transparent'} border disabled:cursor-not-allowed text-yellow-500 font-bold text-xs py-1.5 rounded uppercase tracking-wider transition-colors`}
                     >
                       Lucky
                     </button>
+                    {isTurn && activeRollingStat === stat && (
+                      <motion.button
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        onClick={onFinishGambleTurn}
+                        className="bg-green-600 hover:bg-green-500 text-white p-1.5 rounded transition-colors"
+                        title="Lock Stat & End Turn"
+                      >
+                        <CheckCircle2 size={16} />
+                      </motion.button>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -514,12 +544,22 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
                 )}
                 <div className="flex gap-2">
                   <button 
-                    disabled={rollingStats['bindingVow'] || !gambleConfig || !gambleState || (gambleState.statRolls['bindingVow'] || 0) >= gambleConfig.rollsPerStat}
+                    disabled={!isTurn || (activeRollingStat && activeRollingStat !== 'bindingVow') || rollingStats['bindingVow'] || !gambleConfig || !gambleState || (gambleState.statRolls['bindingVow'] || 0) >= gambleConfig.rollsPerStat}
                     onClick={() => handleRollClick('bindingVow', false)}
-                    className="flex-1 bg-yellow-950/40 hover:bg-yellow-900/60 border border-yellow-800/40 disabled:bg-zinc-900 disabled:text-zinc-700 disabled:cursor-not-allowed text-yellow-500 font-black text-xs py-2 rounded uppercase tracking-[0.2em] transition-all shadow-[0_0_10px_rgba(234,179,8,0.1)] active:scale-95"
+                    className={`flex-1 ${isTurn && (!activeRollingStat || activeRollingStat === 'bindingVow') ? 'bg-yellow-950/40 hover:bg-yellow-900/60 border-yellow-800/40' : 'bg-zinc-900/50 text-zinc-700 border-transparent'} border disabled:cursor-not-allowed text-yellow-500 font-black text-xs py-2 rounded uppercase tracking-[0.2em] transition-all shadow-[0_0_10px_rgba(234,179,8,0.1)] active:scale-95`}
                   >
                     Soul Roll
                   </button>
+                  {isTurn && activeRollingStat === 'bindingVow' && (
+                    <motion.button
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      onClick={onFinishGambleTurn}
+                      className="bg-green-600 hover:bg-green-500 text-white p-1.5 rounded transition-colors"
+                    >
+                      <CheckCircle2 size={16} />
+                    </motion.button>
+                  )}
                 </div>
               </div>
             ) : (

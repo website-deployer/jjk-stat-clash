@@ -39,6 +39,9 @@ export default function LocalDraft() {
   // Gamble configurations
   const [gambleConfig, setGambleConfig] = useState({ totalRolls: 50, luckyRolls: 10, rollsPerStat: 5 });
   const [gambleStates, setGambleStates] = useState<Record<number, GambleState>>({});
+  const [currentTurnPlayer, setCurrentTurnPlayer] = useState(0);
+  const [activeRollingStat, setActiveRollingStat] = useState<string | null>(null);
+  const [extraTurns, setExtraTurns] = useState<Record<number, number>>({});
 
   // Sync gamble states if players are added/removed or config changes
   React.useEffect(() => {
@@ -162,6 +165,9 @@ export default function LocalDraft() {
   };
 
   const handleGambleRoll = (playerIndex: number, stat: string, isLucky: boolean) => {
+    if (draftMode === 'gamble' && playerIndex !== currentTurnPlayer) return;
+    if (activeRollingStat && activeRollingStat !== stat) return;
+
     const currentState = gambleStates[playerIndex];
     if (!currentState) return;
 
@@ -194,7 +200,8 @@ export default function LocalDraft() {
         if (entity.statValue) pwr = entity.statValue;
         else if (entity.stats && entity.stats[stat]) pwr = entity.stats[stat];
         const grade = entity.grade || '';
-        if (grade === 'Mythic') pwr += 100;
+        if (grade === 'Calamity') pwr += 200;
+        else if (grade === 'Mythic') pwr += 100;
         else if (grade === 'Legendary') pwr += 50;
         else if (grade === 'Epic') pwr += 30;
         else if (grade === 'Rare') pwr += 15;
@@ -227,6 +234,38 @@ export default function LocalDraft() {
       newPlayers[playerIndex] = validateDraft(newPlayers[playerIndex]);
     }
     setPlayers(newPlayers);
+
+    // Track active stat for the turn
+    if (!activeRollingStat) {
+      setActiveRollingStat(stat);
+    }
+
+    // Handle extra turn if Binding Vow is picked
+    if (stat === 'bindingVow' && randomEntity.id) {
+       setExtraTurns(prev => ({ ...prev, [playerIndex]: (prev[playerIndex] || 0) + 1 }));
+       handleFinishGambleTurn(); // Advance turn immediately after picking a vow
+    }
+  };
+
+  const handleFinishGambleTurn = () => {
+    setActiveRollingStat(null);
+    
+    if (extraTurns[currentTurnPlayer] > 0) {
+      setExtraTurns(prev => ({ ...prev, [currentTurnPlayer]: prev[currentTurnPlayer] - 1 }));
+      // Player gets another turn, so currentTurnPlayer stays the same
+      return;
+    }
+
+    let nextPlayer = (currentTurnPlayer + 1) % players.length;
+    let attempts = 0;
+    while (attempts < players.length) {
+      const draft = players[nextPlayer];
+      const filled = statsList.every(s => draft[s] !== null);
+      if (!filled) break;
+      nextPlayer = (nextPlayer + 1) % players.length;
+      attempts++;
+    }
+    setCurrentTurnPlayer(nextPlayer);
   };
 
   const getAvailableEntities = (currentSelectedId: string | null, category: string, draft: DraftSelection) => {
@@ -769,6 +808,9 @@ export default function LocalDraft() {
                     gambleState={gambleStates[index]}
                     gambleConfig={gambleConfig}
                     onGambleRoll={(stat, isLucky) => handleGambleRoll(index, stat, isLucky)}
+                    isTurn={draftMode === 'gamble' ? index === currentTurnPlayer : true}
+                    activeRollingStat={index === currentTurnPlayer ? activeRollingStat : null}
+                    onFinishGambleTurn={handleFinishGambleTurn}
                   />
                 ))}
               </div>
@@ -778,6 +820,42 @@ export default function LocalDraft() {
                 onClash={() => setActiveOverlay('clash')}
                 showClashButton={allSelected}
               />
+
+              <AnimatePresence>
+                {activeOverlay === 'ban' && (
+                  <PhaseTransition
+                    key="toDraft"
+                    topKanji="呪術"
+                    topEnglish="SORCERY PHASE"
+                    bottomPhase="PHASE 02"
+                    bottomTitle="DRAFT SELECTION"
+                    onPhaseSwap={() => setDraftPhase('drafting')}
+                    onComplete={() => setActiveOverlay(null)}
+                  />
+                )}
+                {activeOverlay === 'clash' && (
+                  <PhaseTransition
+                    key="toClash"
+                    topKanji="展開"
+                    topEnglish="EXPANSION PHASE"
+                    bottomPhase="FINAL PHASE"
+                    bottomTitle="DOMAIN PARADOX"
+                    onPhaseSwap={() => setDraftPhase('comparing')}
+                    onComplete={() => setActiveOverlay(null)}
+                  />
+                )}
+                {activeOverlay === 'startToBan' && (
+                  <PhaseTransition
+                    key="toBan"
+                    topKanji="拒否"
+                    topEnglish="REJECTION PHASE"
+                    bottomPhase="PHASE 01"
+                    bottomTitle="BAN SELECTION"
+                    onPhaseSwap={() => setDraftPhase('banning')}
+                    onComplete={() => setActiveOverlay(null)}
+                  />
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 

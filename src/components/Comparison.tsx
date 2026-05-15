@@ -16,6 +16,8 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
   const [scores, setScores] = useState<number[]>(new Array(players.length).fill(0));
   const [isFinished, setIsFinished] = useState(false);
   const [blackFlashes, setBlackFlashes] = useState<boolean[][]>([]);
+  const [showExpansionConfirm, setShowExpansionConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const getWinners = () => {
     const maxScore = Math.max(...scores);
@@ -312,6 +314,8 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
     setIsFinished(false);
   };
 
+  const isMultiplayer = typeof window !== 'undefined' && window.location.pathname.includes('/multiplayer/draft/');
+
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col items-center gap-8 p-4">
       <div className="relative flex flex-wrap justify-center gap-4 items-center bg-[#0a0a0a]/80 backdrop-blur-md border border-red-900/40 shadow-[0_0_20px_rgba(220,38,38,0.2)] px-6 py-3 rounded-2xl mb-4">
@@ -447,14 +451,46 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
                   </div>
 
                   <div className="mt-10 flex justify-center">
-                    <button
-                      onClick={startComparison}
-                      className="bg-red-600 hover:bg-red-700 text-white font-black font-display py-5 px-20 rounded-full text-2xl uppercase tracking-[0.3em] shadow-[0_0_50px_rgba(220,38,38,0.3)] transition-all hover:scale-110 flex items-center gap-4 group relative overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                      <Swords size={32} className="group-hover:rotate-12 transition-transform relative z-10" />
-                      <span className="relative z-10 font-black italic">Initiate Expansion</span>
-                    </button>
+                    {!showExpansionConfirm ? (
+                      <button
+                        onClick={() => setShowExpansionConfirm(true)}
+                        className="bg-red-600 hover:bg-red-700 text-white font-black font-display py-5 px-20 rounded-full text-2xl uppercase tracking-[0.3em] shadow-[0_0_50px_rgba(220,38,38,0.3)] transition-all hover:scale-110 flex items-center gap-4 group relative overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        <Swords size={32} className="group-hover:rotate-12 transition-transform relative z-10" />
+                        <span className="relative z-10 font-black italic">Initiate Expansion</span>
+                      </button>
+                    ) : (
+                      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center">
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          className="flex flex-col items-center gap-6 bg-zinc-950 border border-red-500/50 p-10 rounded-3xl shadow-[0_0_100px_rgba(220,38,38,0.3)] relative"
+                        >
+                          <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
+                          <Swords size={48} className="text-red-500 mb-2 animate-pulse" />
+                          <p className="text-red-500 font-black font-display text-2xl uppercase tracking-widest text-center">Confirm Domain Expansion</p>
+                          <p className="text-zinc-400 font-mono text-xs uppercase tracking-widest text-center max-w-sm mb-4">Once initiated, the clash cannot be stopped. Both sorcerers' stats will be measured.</p>
+                          <div className="flex gap-4 w-full">
+                            <button 
+                              onClick={() => {
+                                setShowExpansionConfirm(false);
+                                startComparison();
+                              }}
+                              className="flex-1 py-4 bg-red-600 text-white font-black uppercase tracking-[0.2em] rounded-xl hover:bg-red-500 transition-colors shadow-[0_0_30px_rgba(220,38,38,0.5)]"
+                            >
+                              Yes, Expand!
+                            </button>
+                            <button 
+                              onClick={() => setShowExpansionConfirm(false)}
+                              className="flex-1 py-4 bg-zinc-900 text-zinc-400 font-bold uppercase tracking-[0.2em] rounded-xl border border-zinc-800 hover:bg-zinc-800 hover:text-white transition-colors"
+                            >
+                              Wait
+                            </button>
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -549,14 +585,53 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
             </motion.p>
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.05, borderColor: "rgba(234,179,8,0.8)" }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onReset(getWinners(), scores)}
-            className="mt-8 px-12 py-5 bg-[#111] hover:bg-zinc-900 text-yellow-500 rounded-full font-mono font-black uppercase tracking-[0.2em] transition-all border border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.2)] relative z-10"
+          {!showResetConfirm ? (
+            <motion.button
+              whileHover={{ scale: 1.05, borderColor: "rgba(234,179,8,0.8)" }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowResetConfirm(true)}
+              className="mt-8 px-12 py-5 bg-[#111] hover:bg-zinc-900 text-yellow-500 rounded-full font-mono font-black uppercase tracking-[0.2em] transition-all border border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.2)] relative z-10"
+            >
+              {isMultiplayer ? "[ Ready for New Round ]" : "[ New Matchup ]"}
+            </motion.button>
+          ) : (
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="flex flex-col items-center gap-6 bg-zinc-950 border border-yellow-500/50 p-10 rounded-3xl shadow-[0_0_100px_rgba(234,179,8,0.2)] relative"
+              >
+                <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent"></div>
+                <Trophy size={48} className="text-yellow-500 mb-2 animate-pulse" />
+                <p className="text-yellow-500 font-black font-display text-2xl uppercase tracking-widest text-center">Start Another Match?</p>
+                <p className="text-zinc-400 font-mono text-xs uppercase tracking-widest text-center max-w-sm mb-4">Are you ready to initiate a new drafting phase?</p>
+                <div className="flex gap-4 w-full">
+                  <button 
+                    onClick={() => {
+                      setShowResetConfirm(false);
+                      onReset(getWinners(), scores);
+                    }}
+                    className="flex-1 py-4 bg-yellow-500 text-black font-black uppercase tracking-[0.2em] rounded-xl hover:bg-yellow-400 transition-colors shadow-[0_0_30px_rgba(234,179,8,0.3)]"
+                  >
+                    Confirm
+                  </button>
+                  <button 
+                    onClick={() => setShowResetConfirm(false)}
+                    className="flex-1 py-4 bg-zinc-900 text-zinc-400 font-bold uppercase tracking-[0.2em] border border-zinc-800 rounded-xl hover:bg-zinc-800 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          <button
+            onClick={() => window.location.href = '/play'}
+            className="mt-4 text-[10px] font-mono text-zinc-600 hover:text-white uppercase tracking-widest transition-colors relative z-10"
           >
-            [ New Matchup ]
-          </motion.button>
+            [ Return to Hub ]
+          </button>
         </motion.div>
       )}
     </div>

@@ -10,7 +10,8 @@ const getEntityPower = (entity: any, statToFill: string) => {
   else if (entity.stats && entity.stats[statToFill]) pwr = entity.stats[statToFill];
   
   const grade = entity.grade || '';
-  if (grade === 'Mythic') pwr += 100;
+  if (grade === 'Calamity') pwr += 200;
+  else if (grade === 'Mythic') pwr += 100;
   else if (grade === 'Legendary') pwr += 50;
   else if (grade === 'Epic') pwr += 30;
   else if (grade === 'Rare') pwr += 15;

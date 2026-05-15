@@ -13,10 +13,13 @@ export default class DraftServer implements PartyServer {
     draftPhase: 'setup',
     draftMode: 'normal',
     activePlayer: 0,
+    currentRollingStat: null,
     timeLeft: 30,
     maxPlayers: 2,
     gambleConfig: { totalRolls: 50, luckyRolls: 10, rollsPerStat: 5 },
-    gambleStates: {}
+    gambleStates: {},
+    readyToReset: [],
+    extraTurns: {} // Track extra turns per player
   };
 
   timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -58,6 +61,7 @@ export default class DraftServer implements PartyServer {
       remainingLucky: this.state.gambleConfig.luckyRolls,
       statRolls: {}
     };
+    this.state.readyToReset.push(false);
 
     this.broadcastState();
   }
@@ -72,6 +76,7 @@ export default class DraftServer implements PartyServer {
         this.state.lockedBans.splice(index, 1);
         this.state.readyToClash.splice(index, 1);
         this.state.roundWins.splice(index, 1);
+        this.state.readyToReset.splice(index, 1);
         delete this.state.gambleStates[conn.id];
         this.broadcastState();
       }
@@ -152,20 +157,36 @@ export default class DraftServer implements PartyServer {
     if (data.type === 'selectDraft' && pIndex === this.state.activePlayer && this.state.draftPhase === 'drafting') {
       if (this.state.players[pIndex].draft[data.stat]) return;
       this.state.players[pIndex].draft[data.stat] = data.entityId;
+      
+      // Check for extra turn from Binding Vow
+      if (data.stat === 'bindingVow' && data.entityId) {
+        this.state.extraTurns[sender.id] = (this.state.extraTurns[sender.id] || 0) + 1;
+      }
       this.advanceTurn();
     }
 
-    if (data.type === 'gambleRoll' && pIndex !== -1 && this.state.draftPhase === 'drafting' && this.state.draftMode === 'gamble') {
+    if (data.type === 'finishGambleTurn' && pIndex === this.state.activePlayer && this.state.draftPhase === 'drafting') {
+      this.state.currentRollingStat = null;
+      this.advanceTurn();
+    }
+
+    if (data.type === 'gambleRoll' && pIndex === this.state.activePlayer && this.state.draftPhase === 'drafting' && this.state.draftMode === 'gamble') {
       const gState = this.state.gambleStates[sender.id];
       if (!gState) return;
       
       const isLucky = data.isLucky;
       const stat = data.stat;
+
+      // Restrict to rolling one stat per turn
+      if (this.state.currentRollingStat && this.state.currentRollingStat !== stat) {
+        return;
+      }
       
       if (stat !== 'bindingVow' && gState.remainingTotal <= 0) return;
       if (isLucky && gState.remainingLucky <= 0) return;
       if ((gState.statRolls[stat] || 0) >= this.state.gambleConfig.rollsPerStat) return;
 
+      this.state.currentRollingStat = stat;
       this.state.gambleStates[sender.id] = {
         ...gState,
         remainingTotal: stat === 'bindingVow' ? gState.remainingTotal : gState.remainingTotal - 1,
@@ -173,7 +194,15 @@ export default class DraftServer implements PartyServer {
         statRolls: { ...gState.statRolls, [stat]: (gState.statRolls[stat] || 0) + 1 }
       };
       this.state.players[pIndex].draft[stat] = data.entityId;
-      this.broadcastState();
+
+      // Special case: if they roll a Binding Vow, they get an extra turn but it ends this current "roll turn"
+      if (stat === 'bindingVow' && data.entityId) {
+         this.state.extraTurns[sender.id] = (this.state.extraTurns[sender.id] || 0) + 1;
+         this.state.currentRollingStat = null;
+         this.advanceTurn();
+      } else {
+         this.broadcastState();
+      }
     }
 
     if (data.type === 'readyToClash' && pIndex !== -1 && this.state.draftPhase === 'draftComplete') {
@@ -196,6 +225,29 @@ export default class DraftServer implements PartyServer {
           this.state.roundWins[wIdx]++;
         }
       });
+      this.broadcastState();
+    }
+
+    if (data.type === 'readyToReset' && pIndex !== -1 && this.state.draftPhase === 'comparing') {
+      this.state.readyToReset[pIndex] = true;
+      if (this.state.readyToReset.every((r: boolean) => r)) {
+        this.state.draftPhase = 'banning';
+        this.state.players.forEach((p: any) => {
+          p.draft = this.getEmptyDraft();
+        });
+        this.state.bans = this.state.players.map(() => []);
+        this.state.partialBans = this.state.players.map(() => [null, null]);
+        this.state.lockedBans = this.state.players.map(() => false);
+        this.state.readyToClash = this.state.players.map(() => false);
+        this.state.readyToReset = this.state.players.map(() => false);
+        this.state.players.forEach((p: any) => {
+          this.state.gambleStates[p.id] = {
+            remainingTotal: this.state.gambleConfig.totalRolls,
+            remainingLucky: this.state.gambleConfig.luckyRolls,
+            statRolls: {}
+          };
+        });
+      }
       this.broadcastState();
     }
 
@@ -248,6 +300,23 @@ export default class DraftServer implements PartyServer {
       if (this.timerInterval) clearInterval(this.timerInterval);
       this.state.draftPhase = 'draftComplete';
       this.broadcastState();
+      return;
+    }
+
+    if (allFull) {
+      if (this.timerInterval) clearInterval(this.timerInterval);
+      this.state.draftPhase = 'draftComplete';
+      this.broadcastState();
+      return;
+    }
+
+    // Check for extra turns
+    const currentPlayerId = this.state.players[this.state.activePlayer].id;
+    if (this.state.extraTurns[currentPlayerId] > 0) {
+      this.state.extraTurns[currentPlayerId]--;
+      this.state.timeLeft = 30;
+      this.broadcastState();
+      this.startTimer();
       return;
     }
 
