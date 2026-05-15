@@ -231,12 +231,14 @@ export function SearchableSelect({ value, options, onChange, placeholder, kanji,
               />
             </div>
             <div className="overflow-y-auto flex-1">
-              <div 
-                className="px-3 py-2 text-xs font-mono uppercase tracking-widest text-zinc-500 hover:text-red-400 hover:bg-zinc-900 cursor-pointer transition-colors border-b border-zinc-800/50"
-                onClick={() => { onChange(""); setIsOpen(false); setSearch(''); }}
-              >
-                [ Clear Selection ]
-              </div>
+              {!disabled && (
+                <div 
+                  className="px-3 py-2 text-xs font-mono uppercase tracking-widest text-zinc-500 hover:text-red-400 hover:bg-zinc-900 cursor-pointer transition-colors border-b border-zinc-800/50"
+                  onClick={() => { onChange(""); setIsOpen(false); setSearch(''); }}
+                >
+                  [ Clear Selection ]
+                </div>
+              )}
               {options.filter((o: any) => o.label.toLowerCase().includes(search.toLowerCase())).map((option: any, i: number) => (
                 <div
                   key={`${option.value}-${i}`}

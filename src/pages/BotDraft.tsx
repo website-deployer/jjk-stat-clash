@@ -44,6 +44,8 @@ export default function BotDraft() {
 
   // Turn-based State
   const [activePlayer, setActivePlayer] = useState<number>(0);
+  const [activeRollingStat, setActiveRollingStat] = useState<string | null>(null);
+  const [extraTurns, setExtraTurns] = useState<Record<number, number>>({});
   const [timeLeft, setTimeLeft] = useState<number>(TURN_TIME_SECONDS);
   const [activeOverlay, setActiveOverlay] = useState<'ban' | 'clash' | 'startToBan' | 'startToDraft' | 'banToDraft' | 'transitioning' | 'gambleConfig' | null>(null);
 
@@ -116,7 +118,11 @@ export default function BotDraft() {
         }
       }
 
-      handleGambleRoll(1, statToRoll, useLucky);
+      if (!activeRollingStat) {
+        handleGambleRoll(1, statToRoll, useLucky);
+      } else {
+        handleFinishGambleTurn();
+      }
       return;
     }
 
@@ -139,6 +145,9 @@ export default function BotDraft() {
   };
 
   const handleGambleRoll = (playerIndex: number, stat: string, isLucky: boolean) => {
+    if (draftMode === 'gamble' && playerIndex !== activePlayer) return;
+    if (activeRollingStat && activeRollingStat !== stat) return;
+
     const currentState = gambleStates[playerIndex];
     if (!currentState) return;
 
@@ -198,18 +207,44 @@ export default function BotDraft() {
     newPlayers[playerIndex] = { ...newPlayers[playerIndex], [stat]: randomEntity.id };
     newPlayers[playerIndex] = validateDraft(newPlayers[playerIndex]);
     setPlayers(newPlayers);
+
+    if (!activeRollingStat) {
+      setActiveRollingStat(stat);
+    }
+
+    if (stat === 'bindingVow' && randomEntity.id) {
+       setExtraTurns(prev => ({ ...prev, [playerIndex]: (prev[playerIndex] || 0) + 1 }));
+       handleFinishGambleTurn();
+    }
+  };
+
+  const handleFinishGambleTurn = () => {
+    setActiveRollingStat(null);
+    
+    if (extraTurns[activePlayer] > 0) {
+      setExtraTurns(prev => ({ ...prev, [activePlayer]: prev[activePlayer] - 1 }));
+      setTimeLeft(TURN_TIME_SECONDS);
+      return;
+    }
+
     passTurn();
   };
 
   const executeAutoTurn = (pIndex: number) => {
     if (draftMode === 'gamble') {
+      if (activeRollingStat) {
+        handleFinishGambleTurn();
+        return;
+      }
       const emptyStats = statsList.filter(stat => !players[pIndex][stat]);
       if (emptyStats.length === 0) {
-        passTurn();
+        handleFinishGambleTurn();
         return;
       }
       const randomStat = emptyStats[Math.floor(Math.random() * emptyStats.length)];
       handleGambleRoll(pIndex, randomStat, false);
+      // After auto-roll, immediately finish turn
+      setTimeout(() => handleFinishGambleTurn(), 500);
       return;
     }
 
@@ -391,9 +426,9 @@ export default function BotDraft() {
                   <span className="text-zinc-400 font-mono text-xs uppercase tracking-[0.3em]">Difficulty: {difficulty}</span>
                 </div>
 
-                <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-12 relative z-10">Select Engagement Mode</h2>
+                <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-12 relative z-50">Select Engagement Mode</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-30">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-50">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -620,6 +655,9 @@ export default function BotDraft() {
                         lockOnSelect={true}
                         gambleState={gambleStates[index]}
                         onGambleRoll={(stat, isLucky) => handleGambleRoll(index, stat, isLucky)}
+                        isTurn={index === activePlayer}
+                        activeRollingStat={index === activePlayer ? activeRollingStat : null}
+                        onFinishGambleTurn={handleFinishGambleTurn}
                       />
                     </div>
                   ))}

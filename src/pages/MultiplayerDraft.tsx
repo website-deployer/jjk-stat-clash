@@ -136,25 +136,7 @@ export default function MultiplayerDraft() {
     socket.send(JSON.stringify({ type: 'finishGambleTurn' }));
   };
 
-  // Auto-pick on timeout
-  useEffect(() => {
-    if (!gameState || gameState.draftPhase !== 'drafting' || gameState.timeLeft !== 0) return;
-    const localMyIndex = gameState.players.findIndex((p: any) => p.id === socket.id);
-    if (localMyIndex === -1 || gameState.activePlayer !== localMyIndex) return;
-    
-    const myDraft = gameState.players[localMyIndex].draft;
-    const emptyStat = statsList.find(s => myDraft[s] === null);
-    
-    if (emptyStat) {
-      const category = statCategoryMap[emptyStat] || 'character';
-      const available = getAvailableEntities(null, category, myDraft);
-      
-      if (available.length > 0) {
-        const randomEntity = available[Math.floor(Math.random() * available.length)];
-        socket.send(JSON.stringify({ type: 'selectDraft', stat: emptyStat, entityId: randomEntity.id }));
-      }
-    }
-  }, [gameState?.timeLeft]);
+  // Connection timeout check (handled by separate useEffect)
 
   const getAvailableEntities = (currentSelectedId: string | null, category: string, draft: DraftSelection): Entity[] => {
     if (!gameState) return [];

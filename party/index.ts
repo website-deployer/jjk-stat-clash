@@ -341,26 +341,41 @@ export default class DraftServer implements PartyServer {
     if (!player) return this.advanceTurn();
 
     const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
-    const emptyStat = statsList.find(s => player.draft[s] === null);
-
-    if (!emptyStat) return this.advanceTurn();
-
+    
     if (this.state.draftMode === 'gamble') {
       const gState = this.state.gambleStates[player.id];
       const charIds = ["yuji-itadori", "megumi-fushiguro", "nobara-kugisaki", "satoru-gojo", "kento-nanami", "maki-zenin", "toge-inumaki", "panda", "aoi-todo", "mai-zenin", "kasumi-miwa", "kokichi-muta", "momo-nishimiya", "noritoshi-kamo", "utahime-iori", "mei-mei", "naobito-zenin", "choso", "eso", "kechizu", "mahito", "jogo", "hanami", "dagon", "geto-suguru", "toji-fushiguro", "ryomen-sukuna"];
-      const randomId = charIds[Math.floor(Math.random() * charIds.length)];
       
-      this.state.gambleStates[player.id] = {
-        ...gState,
-        remainingTotal: gState.remainingTotal - 1,
-        statRolls: { ...gState.statRolls, [emptyStat]: (gState.statRolls[emptyStat] || 0) + 1 }
-      };
-      player.draft[emptyStat] = randomId;
+      let statToResolve = this.state.currentRollingStat;
+      
+      // If no stat is being rolled, pick a random empty one
+      if (!statToResolve) {
+        const emptyStats = statsList.filter(s => player.draft[s] === null);
+        if (emptyStats.length === 0) return this.advanceTurn();
+        statToResolve = emptyStats[Math.floor(Math.random() * emptyStats.length)];
+        
+        // Perform a random roll if no character was selected yet
+        const randomId = charIds[Math.floor(Math.random() * charIds.length)];
+        this.state.gambleStates[player.id] = {
+          ...gState,
+          remainingTotal: gState.remainingTotal - 1,
+          statRolls: { ...gState.statRolls, [statToResolve]: (gState.statRolls[statToResolve] || 0) + 1 }
+        };
+        player.draft[statToResolve] = randomId;
+      }
+      
+      // Reset rolling state and advance
+      this.state.currentRollingStat = null;
+      this.advanceTurn();
     } else {
-      player.draft[emptyStat] = "yuji-itadori";
+      const emptyStats = statsList.filter(s => player.draft[s] === null);
+      if (emptyStats.length === 0) return this.advanceTurn();
+      const randomStat = emptyStats[Math.floor(Math.random() * emptyStats.length)];
+      const charIds = ["yuji-itadori", "megumi-fushiguro", "nobara-kugisaki", "satoru-gojo", "kento-nanami", "maki-zenin", "toge-inumaki", "panda", "aoi-todo", "mai-zenin", "kasumi-miwa", "kokichi-muta", "momo-nishimiya", "noritoshi-kamo", "utahime-iori", "mei-mei", "naobito-zenin", "choso", "eso", "kechizu", "mahito", "jogo", "hanami", "dagon", "geto-suguru", "toji-fushiguro", "ryomen-sukuna"];
+      const randomId = charIds[Math.floor(Math.random() * charIds.length)];
+      player.draft[randomStat] = randomId;
+      this.advanceTurn();
     }
-
-    this.advanceTurn();
   }
 
   broadcastState() {
