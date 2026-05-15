@@ -194,7 +194,7 @@ export const getBotPick = (
       const bestAvailable = options[0];
       let score = getEntityPower(bestAvailable, stat);
       
-      const highTierCount = options.filter(opt => (opt.grade === 'Mythic' || opt.grade === 'Legendary')).length;
+      const highTierCount = options.filter(opt => (opt.grade === 'Calamity' || opt.grade === 'Mythic' || opt.grade === 'Legendary')).length;
       if (highTierCount <= 1) score += 50; 
       else if (highTierCount <= 2) score += 25;
 

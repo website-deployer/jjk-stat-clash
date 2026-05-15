@@ -22,6 +22,7 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
   });
 
   const rarityOrder: Record<string, number> = {
+    'Calamity': 6,
     'Mythic': 5,
     'Legendary': 4,
     'Epic': 3,
@@ -40,6 +41,7 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
 
   const getRarityColor = (grade: string = 'Common') => {
     switch (grade) {
+      case 'Calamity': return 'text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.6)]';
       case 'Mythic': return 'text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]';
       case 'Legendary': return 'text-yellow-500';
       case 'Epic': return 'text-purple-500';
@@ -275,6 +277,7 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
                         className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-xs font-mono text-zinc-400 focus:border-red-500 outline-none"
                       >
                         <option value="All">All Rarities</option>
+                        <option value="Calamity">Calamity</option>
                         <option value="Mythic">Mythic</option>
                         <option value="Legendary">Legendary</option>
                         <option value="Epic">Epic</option>
@@ -288,7 +291,7 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
                         className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-xs font-mono text-zinc-400 focus:border-red-500 outline-none"
                       >
                         <option value="Default">Default Sort</option>
-                        <option value="Rarity">Sort by Rarity (Mythic to Common)</option>
+                        <option value="Rarity">Sort by Rarity (Calamity to Common)</option>
                         <option value="Alphabetical">Sort Alphabetical</option>
                       </select>
                     </div>
@@ -347,12 +350,13 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
               {activeTab === 'rarity' && (
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto pb-20">
                    {[
-                     { grade: 'Mythic', color: 'bg-red-600 text-red-500', desc: 'Entities that transcend reality. Sukuna (Heian Era), The Limitless, and Open Barrier domains. Stats typically range 120+.' },
-                     { grade: 'Legendary', color: 'bg-yellow-600 text-yellow-500', desc: 'Pinnacle sorcery. 10 Shadows, Rika, and Six Eyes users. Stats range 100-115.' },
-                     { grade: 'Epic', color: 'bg-purple-600 text-purple-500', desc: 'First-grade essentials. High CE density, advanced Reverse Cursed Technique usage. Stats 85-95.' },
-                     { grade: 'Rare', color: 'bg-blue-600 text-blue-500', desc: 'Standard sorcerers. Core techniques and reliable tools. Stats 70-80.' },
-                     { grade: 'Uncommon', color: 'bg-zinc-400 text-zinc-400', desc: 'Basic sorcery and tools. Standard curriculum items. Stats 55-65.' },
-                     { grade: 'Common', color: 'bg-zinc-600 text-zinc-600', desc: 'Auxiliary managers and simple tools. Minimal combat utility. Stats below 50.' }
+                     { grade: 'Calamity', color: 'bg-indigo-600 text-indigo-400', desc: 'Beings that warp the balance of the world. Satoru Gojo, Ryomen Sukuna, Modulo Yuji, and Dabura. Stats push beyond 100, reaching the absolute ceiling of 120.' },
+                     { grade: 'Mythic', color: 'bg-red-600 text-red-500', desc: 'Entities that transcend reality. The Sorcerer Killer, Open Barrier domains, and indestructible cursed objects. Stats typically range 95-120.' },
+                     { grade: 'Legendary', color: 'bg-yellow-600 text-yellow-500', desc: 'Pinnacle sorcery. 10 Shadows, Rika, and Six Eyes users. Stats range 90-115.' },
+                     { grade: 'Epic', color: 'bg-purple-600 text-purple-500', desc: 'First-grade essentials. High CE density, advanced Reverse Cursed Technique usage. Stats 85-108.' },
+                     { grade: 'Rare', color: 'bg-blue-600 text-blue-500', desc: 'Standard sorcerers. Core techniques and reliable tools. Stats 72-96.' },
+                     { grade: 'Uncommon', color: 'bg-zinc-400 text-zinc-400', desc: 'Basic sorcery and tools. Standard curriculum items. Stats 48-84.' },
+                     { grade: 'Common', color: 'bg-zinc-600 text-zinc-600', desc: 'Auxiliary managers and simple tools. Minimal combat utility. Stats below 60.' }
                    ].map(r => (
                      <div key={r.grade} className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 relative overflow-hidden group">
                         <div className={`absolute top-0 right-0 w-24 h-24 ${r.color.split(' ')[0]} blur-[80px] opacity-10 group-hover:opacity-30 transition-opacity`} />
