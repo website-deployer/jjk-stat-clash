@@ -34,6 +34,20 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
   }, []);
 
   useEffect(() => {
+    // Generate a deterministic seed based on draft picks and round count
+    let seedStr = players.map(p => Object.values(p).join('')).join('') + roundWins.join('-');
+    let seed = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
+      seed |= 0;
+    }
+    const seededRandom = () => {
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+
     const flashes = statsList.map(() => players.map(() => false));
     
     players.forEach((player, playerIndex) => {
@@ -57,7 +71,7 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
           chance *= 0.2;
         }
 
-        if (Math.random() < chance) {
+        if (seededRandom() < chance) {
           flashes[statIndex][playerIndex] = true;
         }
       });
@@ -65,7 +79,7 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
       // Pity system for Black Flash ability holders
       if (hasBlackFlashAbility && !flashes.flat().includes(true)) {
         const physicalStats = statsList.filter(s => ['strength', 'body', 'speed'].includes(s));
-        const randomStat = physicalStats[Math.floor(Math.random() * physicalStats.length)];
+        const randomStat = physicalStats[Math.floor(seededRandom() * physicalStats.length)];
         const targetIndex = statsList.indexOf(randomStat);
         if (targetIndex !== -1) flashes[targetIndex][playerIndex] = true;
       }
