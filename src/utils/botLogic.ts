@@ -141,11 +141,12 @@ export const getBotPick = (
 
     // 1. High-Value Synergy completion/initiation
     if (synergyTargets.length > 0) {
-      const topTarget = synergyTargets[0];
-      for (const stat of emptyStats) {
-        const options = availablePerStat[stat];
-        const match = options.find(opt => opt.id === topTarget.id);
-        if (match) return { stat, id: match.id };
+      for (const target of synergyTargets.slice(0, 3)) {
+        for (const stat of emptyStats) {
+          const options = availablePerStat[stat];
+          const match = options.find(opt => opt.id === target.id);
+          if (match && target.weight > 100) return { stat, id: match.id };
+        }
       }
     }
 
@@ -168,7 +169,7 @@ export const getBotPick = (
         if (matchCount >= pairing.entities.length - 2 || (pairing.isSecret && matchCount >= 1)) {
           pairing.entities.forEach(e => {
             if (!oppIds.includes(e) && !takenIds.has(e)) {
-              opponentTargets.push({ id: e, weight: weight * 2.5 });
+              opponentTargets.push({ id: e, weight: weight * 3.5 });
             }
           });
         }
@@ -176,11 +177,13 @@ export const getBotPick = (
     });
 
     if (opponentTargets.length > 0) {
-      const bestBlock = opponentTargets.sort((a, b) => b.weight - a.weight)[0];
-      for (const stat of emptyStats) {
-        const options = availablePerStat[stat];
-        const match = options.find(opt => opt.id === bestBlock.id);
-        if (match) return { stat, id: match.id };
+      const bestBlocks = opponentTargets.sort((a, b) => b.weight - a.weight).slice(0, 3);
+      for (const block of bestBlocks) {
+        for (const stat of emptyStats) {
+          const options = availablePerStat[stat];
+          const match = options.find(opt => opt.id === block.id);
+          if (match && block.weight > 150) return { stat, id: match.id };
+        }
       }
     }
 
@@ -195,8 +198,11 @@ export const getBotPick = (
       let score = getEntityPower(bestAvailable, stat);
       
       const highTierCount = options.filter(opt => (opt.grade === 'Calamity' || opt.grade === 'Mythic' || opt.grade === 'Legendary')).length;
-      if (highTierCount <= 1) score += 50; 
-      else if (highTierCount <= 2) score += 25;
+      if (highTierCount <= 1) score += 100; 
+      else if (highTierCount <= 2) score += 50;
+
+      if (bestAvailable.grade === 'Calamity') score += 150;
+      else if (bestAvailable.grade === 'Mythic') score += 75;
 
       pairings.forEach(p => {
         if (p.isSecret && p.entities.includes(bestAvailable.id)) {

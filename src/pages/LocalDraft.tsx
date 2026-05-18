@@ -212,7 +212,11 @@ export default function LocalDraft() {
       available = sorted.slice(0, Math.max(1, Math.ceil(sorted.length * 0.3)));
     }
 
-    const randomEntity = available[Math.floor(Math.random() * available.length)];
+    let randomEntity = available[Math.floor(Math.random() * available.length)];
+    if (category === 'character' && Math.random() < 0.3) {
+      const humanEntity = characters.find(c => c.id === 'human');
+      if (humanEntity) randomEntity = humanEntity as any;
+    }
 
     const newGambleStates = { ...gambleStates };
     newGambleStates[playerIndex] = {

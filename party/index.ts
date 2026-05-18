@@ -292,21 +292,17 @@ export default class DraftServer implements PartyServer {
     }, 1000);
   }
 
-  advanceTurn() {
-    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
-    const allFull = this.state.players.every((p: any) => statsList.every(stat => p.draft[stat] !== null));
-    
     if (allFull) {
       if (this.timerInterval) clearInterval(this.timerInterval);
       this.state.draftPhase = 'draftComplete';
       this.broadcastState();
-      return;
-    }
-
-    if (allFull) {
-      if (this.timerInterval) clearInterval(this.timerInterval);
-      this.state.draftPhase = 'draftComplete';
-      this.broadcastState();
+      
+      this.timerInterval = setTimeout(() => {
+        if (this.state.draftPhase === 'draftComplete') {
+           this.state.draftPhase = 'transitioning';
+           this.broadcastState();
+        }
+      }, 15000) as any;
       return;
     }
 
@@ -342,20 +338,35 @@ export default class DraftServer implements PartyServer {
 
     const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
     
+    const categoryToIds: Record<string, string[]> = {
+      character: ["gojo", "sukuna", "yuta", "geto", "kenjaku", "yuki", "yuji", "megumi", "nobara", "maki", "toge", "panda", "hakari", "kirara", "todo", "kamo", "momo", "mai", "miwa", "mechamaru", "nanami", "yaga", "shoko", "utahime", "gakuganji", "kusakabe", "ino", "meimei", "uiui", "ijichi", "nitta-akari", "nitta-arata", "naobito", "naoya", "ogi", "jinichi", "kashimo", "higuruma", "takaba", "ryu", "uro", "kurourushi", "charles", "reggie", "hazenoki", "remi", "angel", "yorozu", "daido", "miyo", "dhruv", "amai", "haba", "hanyu", "mahito", "jogo", "hanami", "dagon", "choso", "eso", "kechizu", "uraume", "toji", "rika", "miguel", "larue", "riko", "kuroi", "haibara", "tengen", "junpei", "juzo", "haruta", "awasaka", "ogami", "saki", "kaito", "kensuke", "dabura", "modulo-yuji", "human"],
+      tool: ["playful-cloud", "inverted-spear", "split-soul-katana", "slaughter-demon", "dragon-bone", "chain-of-a-thousand-miles", "sword-of-extermination", "festering-life-sword", "supreme-martial-solution", "black-rope", "miwa-katana", "nanami-cleaver", "higuruma-gavel", "kashimo-staff"],
+      domainExpansion: ["unlimited-void", "malevolent-shrine", "infinite-love", "womb-profusion", "authentic-mutual-love", "chimera-shadow-garden", "deadly-sentencing", "idle-death-gamble", "coffin-of-the-iron-mountain", "horizon-of-the-captivating-skanda", "self-embodiment-of-perfection", "threefold-affliction", "time-cell-moon-palace", "mutually-assured-love"],
+      cursedTechnique: ["limitless", "shrine", "copy", "cursed-spirit-manipulation", "ten-shadows", "straw-doll", "blood-manipulation", "idle-transfiguration", "boogie-woogie", "construction", "ratio", "projection-sorcery", "mythical-beast-amber", "comedian", "ice-formation", "star-rage", "private-pure-love-train", "love-rendezvous"],
+      shikigami: ["mahoraga", "rika-shikigami", "divine-dogs", "nue", "toad", "great-serpent", "max-elephant", "rabbit-escape", "round-deer", "piercing-ox", "mourning-tiger", "judgeman", "garuda", "moon-dregs"],
+      specialPower: ["six-eyes", "reverse-cursed-technique", "black-flash", "heavenly-restriction-physical", "heavenly-restriction-ce", "simple-domain", "falling-blossom-emotion", "hollow-wicker-basket", "domain-amplification", "maximum-output", "new-shadow-style", "curtain-mastery", "soul-info-perception"],
+      bindingVow: ["binding-vow", "special-binding-vow"]
+    };
+
+    const statCategoryMap: Record<string, string> = {
+      strength: 'character', speed: 'character', durability: 'character', ce: 'character', body: 'character', iq: 'character',
+      ct: 'cursedTechnique', tool: 'tool', specialPower1: 'specialPower', specialPower2: 'specialPower',
+      shikigami: 'shikigami', domainExpansion: 'domainExpansion', bindingVow: 'bindingVow'
+    };
+
     if (this.state.draftMode === 'gamble') {
       const gState = this.state.gambleStates[player.id];
-      const charIds = ["yuji-itadori", "megumi-fushiguro", "nobara-kugisaki", "satoru-gojo", "kento-nanami", "maki-zenin", "toge-inumaki", "panda", "aoi-todo", "mai-zenin", "kasumi-miwa", "kokichi-muta", "momo-nishimiya", "noritoshi-kamo", "utahime-iori", "mei-mei", "naobito-zenin", "choso", "eso", "kechizu", "mahito", "jogo", "hanami", "dagon", "geto-suguru", "toji-fushiguro", "ryomen-sukuna"];
-      
       let statToResolve = this.state.currentRollingStat;
       
-      // If no stat is being rolled, pick a random empty one
       if (!statToResolve) {
         const emptyStats = statsList.filter(s => player.draft[s] === null);
         if (emptyStats.length === 0) return this.advanceTurn();
         statToResolve = emptyStats[Math.floor(Math.random() * emptyStats.length)];
         
-        // Perform a random roll if no character was selected yet
-        const randomId = charIds[Math.floor(Math.random() * charIds.length)];
+        const category = statCategoryMap[statToResolve];
+        const validIds = categoryToIds[category] || categoryToIds['character'];
+        const randomId = validIds[Math.floor(Math.random() * validIds.length)];
+        
         this.state.gambleStates[player.id] = {
           ...gState,
           remainingTotal: gState.remainingTotal - 1,
@@ -364,15 +375,17 @@ export default class DraftServer implements PartyServer {
         player.draft[statToResolve] = randomId;
       }
       
-      // Reset rolling state and advance
       this.state.currentRollingStat = null;
       this.advanceTurn();
     } else {
       const emptyStats = statsList.filter(s => player.draft[s] === null);
       if (emptyStats.length === 0) return this.advanceTurn();
       const randomStat = emptyStats[Math.floor(Math.random() * emptyStats.length)];
-      const charIds = ["yuji-itadori", "megumi-fushiguro", "nobara-kugisaki", "satoru-gojo", "kento-nanami", "maki-zenin", "toge-inumaki", "panda", "aoi-todo", "mai-zenin", "kasumi-miwa", "kokichi-muta", "momo-nishimiya", "noritoshi-kamo", "utahime-iori", "mei-mei", "naobito-zenin", "choso", "eso", "kechizu", "mahito", "jogo", "hanami", "dagon", "geto-suguru", "toji-fushiguro", "ryomen-sukuna"];
-      const randomId = charIds[Math.floor(Math.random() * charIds.length)];
+      
+      const category = statCategoryMap[randomStat];
+      const validIds = categoryToIds[category] || categoryToIds['character'];
+      const randomId = validIds[Math.floor(Math.random() * validIds.length)];
+      
       player.draft[randomStat] = randomId;
       this.advanceTurn();
     }

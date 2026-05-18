@@ -234,7 +234,8 @@ export const characters: Entity[] = [
   { id: 'maximum-output', name: 'Maximum Cursed Output', category: 'specialPower', statValue: 108, loreDescription: "A advanced technique where the user pushes their cursed energy output to its absolute limit for a single, devastating move.", grade: "Legendary" },
   { id: 'new-shadow-style', name: 'New Shadow Style', category: 'specialPower', statValue: 96, loreDescription: "A defensive school of jujutsu involving simple domains and sword techniques designed to counter domain expansions.", grade: "Epic" },
   { id: 'curtain-mastery', name: 'Barrier Mastery', category: 'specialPower', statValue: 96, loreDescription: "Exceptional skill in erecting curtains and barriers, allowing for complex conditions and high durability.", grade: "Epic" },
-  { id: 'soul-info-perception', name: 'Soul Information Perception', category: 'specialPower', statValue: 114, loreDescription: "The ability to read the information stored within a soul, useful for both combat prediction and healing complex soul-damage.", grade: "Mythic" }
+  { id: 'soul-info-perception', name: 'Soul Information Perception', category: 'specialPower', statValue: 114, loreDescription: "The ability to read the information stored within a soul, useful for both combat prediction and healing complex soul-damage.", grade: "Mythic" },
+  { id: 'human', name: 'Human', category: 'character', stats: {"strength":50,"speed":50,"durability":50,"ce":0,"body":50,"iq":50}, flavorText: "Just a regular human.", loreDescription: "The baseline for all other characters.", grade: "Common" }
 ];
 
 export const statLabels: Record<string, string> = {
