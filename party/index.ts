@@ -155,6 +155,7 @@ export default class DraftServer implements PartyServer {
     }
 
     if (data.type === 'selectDraft' && pIndex === this.state.activePlayer && this.state.draftPhase === 'drafting') {
+      if (!data.entityId) return;
       if (this.state.players[pIndex].draft[data.stat]) return;
       this.state.players[pIndex].draft[data.stat] = data.entityId;
       
@@ -354,6 +355,12 @@ export default class DraftServer implements PartyServer {
       shikigami: 'shikigami', domainExpansion: 'domainExpansion', bindingVow: 'bindingVow'
     };
 
+    const allBans = this.state.bans.flat().filter(Boolean);
+    const takenIds = new Set<string>();
+    this.state.players.forEach((p: any) => {
+       Object.values(p.draft).forEach((v: any) => { if (typeof v === 'string') takenIds.add(v); });
+    });
+
     if (this.state.draftMode === 'gamble') {
       const gState = this.state.gambleStates[player.id];
       let statToResolve = this.state.currentRollingStat;
@@ -365,7 +372,14 @@ export default class DraftServer implements PartyServer {
         
         const category = statCategoryMap[statToResolve];
         const validIds = categoryToIds[category] || categoryToIds['character'];
-        const randomId = validIds[Math.floor(Math.random() * validIds.length)];
+        
+        let availableIds = validIds.filter(id => !allBans.includes(id) && (id === 'binding-vow' || !takenIds.has(id)));
+        if (availableIds.length === 0) availableIds = validIds;
+
+        let randomId = availableIds[Math.floor(Math.random() * availableIds.length)];
+        if (category === 'character' && Math.random() < 0.3) {
+           if (availableIds.includes('human')) randomId = 'human';
+        }
         
         this.state.gambleStates[player.id] = {
           ...gState,
@@ -384,7 +398,14 @@ export default class DraftServer implements PartyServer {
       
       const category = statCategoryMap[randomStat];
       const validIds = categoryToIds[category] || categoryToIds['character'];
-      const randomId = validIds[Math.floor(Math.random() * validIds.length)];
+      
+      let availableIds = validIds.filter(id => !allBans.includes(id) && (id === 'binding-vow' || !takenIds.has(id)));
+      if (availableIds.length === 0) availableIds = validIds;
+
+      let randomId = availableIds[Math.floor(Math.random() * availableIds.length)];
+      if (category === 'character' && Math.random() < 0.3) {
+         if (availableIds.includes('human')) randomId = 'human';
+      }
       
       player.draft[randomStat] = randomId;
       this.advanceTurn();

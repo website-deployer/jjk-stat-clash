@@ -213,8 +213,8 @@ export default function LocalDraft() {
     }
 
     let randomEntity = available[Math.floor(Math.random() * available.length)];
-    if (category === 'character' && Math.random() < 0.3) {
-      const humanEntity = characters.find(c => c.id === 'human');
+    if (category === 'character' && !isLucky && Math.random() < 0.3) {
+      const humanEntity = available.find(c => c.id === 'human');
       if (humanEntity) randomEntity = humanEntity as any;
     }
 

@@ -95,31 +95,94 @@ export default function BotDraft() {
     if (!difficulty) return;
 
     if (draftMode === 'gamble') {
-      // Bot gamble logic
       const emptyStats = statsList.filter(stat => !players[1][stat]);
       if (emptyStats.length === 0) {
         passTurn();
         return;
       }
 
-      const statToRoll = emptyStats[Math.floor(Math.random() * emptyStats.length)];
       const currentState = gambleStates[1];
 
-      // Bot decided whether to use lucky roll (Hard bot uses it more wisely)
-      let useLucky = false;
-      if (currentState.remainingLucky > 0) {
-        if (difficulty === 'hard') {
-          // Hard bot saves lucky rolls for character/domain/ct
-          if (['character', 'domainExpansion', 'ct'].includes(statToRoll)) useLucky = true;
-        } else if (difficulty === 'medium') {
-          useLucky = Math.random() < 0.3;
+      if (difficulty === 'hard') {
+        const takenIds = new Set<string>();
+        players.forEach(draft => {
+          Object.values(draft).forEach(id => { if (typeof id === 'string') takenIds.add(id); });
+        });
+        const globalBans = bans.flat().filter(Boolean);
+        const pick = getBotPick(difficulty, players[1], [players[0]], globalBans, takenIds);
+        if (pick) {
+          handleSelect(1, pick.stat, pick.id);
         } else {
-          useLucky = Math.random() < 0.1;
+          executeAutoTurn(1);
         }
+        return;
       }
 
+      if (difficulty === 'medium') {
+        if (activeRollingStat) {
+          handleFinishGambleTurn();
+          return;
+        }
+        const statToRoll = emptyStats[Math.floor(Math.random() * emptyStats.length)];
+        const category = statToRoll === 'bindingVow' ? 'bindingVow' : (statCategoryMap[statToRoll] || 'character');
+        
+        const selectedIds = new Set<string>();
+        players.forEach(d => {
+          Object.values(d).forEach(id => { if (typeof id === 'string') selectedIds.add(id); });
+        });
+        const globalBans = bans.flat().filter(Boolean);
+
+        let available = characters.filter(entity => {
+          if (entity.category !== category) return false;
+          if (globalBans.includes(entity.id)) return false;
+          if (entity.id !== 'binding-vow' && selectedIds.has(entity.id)) return false;
+          return true;
+        });
+
+        if (available.length > 0) {
+          const numRolls = Math.min(3, currentState.remainingTotal);
+          let bestEntity = available[0];
+          let bestPower = -1;
+
+          for (let i = 0; i < numRolls; i++) {
+            let roll = available[Math.floor(Math.random() * available.length)];
+            if (category === 'character' && Math.random() < 0.3) {
+              const humanEntity = available.find(c => c.id === 'human');
+              if (humanEntity) roll = humanEntity as any;
+            }
+            
+            const power = roll.statValue || (roll.stats && roll.stats[statToRoll]) || 50;
+            if (power > bestPower) {
+              bestPower = power;
+              bestEntity = roll;
+            }
+          }
+
+          const newGambleStates = { ...gambleStates };
+          newGambleStates[1] = {
+            ...currentState,
+            remainingTotal: currentState.remainingTotal - numRolls,
+            statRolls: { ...currentState.statRolls, [statToRoll]: (currentState.statRolls[statToRoll] || 0) + 1 }
+          };
+          setGambleStates(newGambleStates);
+
+          const newPlayers = [...players];
+          newPlayers[1] = { ...newPlayers[1], [statToRoll]: bestEntity.id };
+          newPlayers[1] = validateDraft(newPlayers[1]);
+          setPlayers(newPlayers);
+          
+          if (!activeRollingStat) setActiveRollingStat(statToRoll);
+          setTimeout(() => handleFinishGambleTurn(), 500);
+        } else {
+          passTurn();
+        }
+        return;
+      }
+
+      // Easy difficulty logic
+      const statToRoll = emptyStats[Math.floor(Math.random() * emptyStats.length)];
       if (!activeRollingStat) {
-        handleGambleRoll(1, statToRoll, useLucky);
+        handleGambleRoll(1, statToRoll, false);
       } else {
         handleFinishGambleTurn();
       }
@@ -193,8 +256,8 @@ export default function BotDraft() {
     }
 
     let randomEntity = available[Math.floor(Math.random() * available.length)];
-    if (category === 'character' && Math.random() < 0.3) {
-      const humanEntity = characters.find(c => c.id === 'human');
+    if (category === 'character' && !isLucky && Math.random() < 0.3) {
+      const humanEntity = available.find(c => c.id === 'human');
       if (humanEntity) randomEntity = humanEntity as any;
     }
 
@@ -573,7 +636,7 @@ export default function BotDraft() {
                         };
                       });
                       setGambleStates(initialGambleStates);
-                      setActiveOverlay('startToDraft');
+                      setActiveOverlay('startToBan');
                     }}
                     className="mt-4 w-full py-4 bg-[linear-gradient(45deg,#b45309,#eab308,#b45309)] bg-[length:200%_auto] text-black font-black uppercase tracking-[0.3em] rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-[gradient_3s_ease_infinite] shadow-[0_0_30px_rgba(234,179,8,0.3)] hover:shadow-[0_0_50px_rgba(234,179,8,0.5)] z-10 text-lg"
                   >

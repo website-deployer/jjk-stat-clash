@@ -79,6 +79,7 @@ export default function MultiplayerDraft() {
     
     // Prevent changing selection once made
     if (gameState.players[myIndex].draft[stat]) return;
+    if (!entityId) return; // Prevent selecting empty
 
     socket.send(JSON.stringify({ type: 'selectDraft', stat, entityId }));
   };
@@ -127,8 +128,8 @@ export default function MultiplayerDraft() {
     }
 
     let randomEntity = available[Math.floor(Math.random() * available.length)];
-    if (category === 'character' && Math.random() < 0.3) {
-      const humanEntity = characters.find(c => c.id === 'human');
+    if (category === 'character' && !isLucky && Math.random() < 0.3) {
+      const humanEntity = available.find(c => c.id === 'human');
       if (humanEntity) randomEntity = humanEntity as any;
     }
     setLocalActiveRollingStat(stat);
@@ -139,6 +140,15 @@ export default function MultiplayerDraft() {
     setLocalActiveRollingStat(null);
     socket.send(JSON.stringify({ type: 'finishGambleTurn' }));
   };
+
+  useEffect(() => {
+    if (gameState) {
+      const myIndex = gameState.players.findIndex((p: any) => p.id === socket.id);
+      if (gameState.activePlayer !== myIndex) {
+        setLocalActiveRollingStat(null);
+      }
+    }
+  }, [gameState?.activePlayer, socket.id]);
 
   // Connection timeout check (handled by separate useEffect)
 
