@@ -234,7 +234,7 @@ export default class DraftServer implements PartyServer {
     if (data.type === 'readyToReset' && pIndex !== -1 && this.state.draftPhase === 'comparing') {
       this.state.readyToReset[pIndex] = true;
       if (this.state.readyToReset.every((r: boolean) => r)) {
-        this.state.draftPhase = 'banning';
+        this.state.draftPhase = 'setup';
         this.state.players.forEach((p: any) => {
           p.draft = this.getEmptyDraft();
         });
@@ -255,7 +255,7 @@ export default class DraftServer implements PartyServer {
     }
 
     if (data.type === 'resetGame' && isHost) {
-      this.state.draftPhase = 'banning';
+      this.state.draftPhase = 'setup';
       this.state.players.forEach((p: any) => {
         p.draft = this.getEmptyDraft();
       });
@@ -361,8 +361,8 @@ export default class DraftServer implements PartyServer {
       domainExpansion: ["unlimited-void", "malevolent-shrine", "infinite-love", "womb-profusion", "authentic-mutual-love", "chimera-shadow-garden", "deadly-sentencing", "idle-death-gamble", "coffin-of-the-iron-mountain", "horizon-of-the-captivating-skanda", "self-embodiment-of-perfection", "threefold-affliction", "time-cell-moon-palace", "mutually-assured-love"],
       cursedTechnique: ["limitless", "shrine", "copy", "cursed-spirit-manipulation", "ten-shadows", "straw-doll", "blood-manipulation", "idle-transfiguration", "boogie-woogie", "construction", "ratio", "projection-sorcery", "mythical-beast-amber", "comedian", "ice-formation", "star-rage", "private-pure-love-train", "love-rendezvous"],
       shikigami: ["mahoraga", "rika-shikigami", "divine-dogs", "nue", "toad", "great-serpent", "max-elephant", "rabbit-escape", "round-deer", "piercing-ox", "mourning-tiger", "judgeman", "garuda", "moon-dregs"],
-      specialPower: ["six-eyes", "reverse-cursed-technique", "black-flash", "heavenly-restriction-physical", "heavenly-restriction-ce", "simple-domain", "falling-blossom-emotion", "hollow-wicker-basket", "domain-amplification", "maximum-output", "new-shadow-style", "curtain-mastery", "soul-info-perception"],
-      bindingVow: ["binding-vow", "special-binding-vow"]
+      specialPower: ["six-eyes", "rct", "black-flash", "heavenly-restriction", "simple-domain", "falling-blossom-emotion", "hollow-wicker-basket", "domain-amplification", "cursed-energy-trait", "the-bath", "cursed-realm", "death-painting-womb", "cursed-corpse-core", "supreme-martial-arts", "soul-perception", "maximum-output", "new-shadow-style", "curtain-mastery", "soul-info-perception"],
+      bindingVow: ["binding-vow"]
     };
 
     const statCategoryMap: Record<string, string> = {

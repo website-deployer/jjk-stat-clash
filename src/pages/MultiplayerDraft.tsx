@@ -594,6 +594,7 @@ export default function MultiplayerDraft() {
             <Comparison 
               players={gameState.players.map((p: any) => p.draft)} 
               roundWins={gameState.roundWins}
+              readyToReset={gameState.readyToReset}
               onReset={(winners) => {
                 socket.send(JSON.stringify({ type: 'readyToReset' }));
                 if (isHost) {

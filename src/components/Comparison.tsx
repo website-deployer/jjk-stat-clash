@@ -8,16 +8,18 @@ import { ClashRow } from './ClashRow';
 interface ComparisonProps {
   players: DraftSelection[];
   roundWins: number[];
+  readyToReset?: boolean[];
   onReset: (winners: number[], finalScores: number[]) => void;
 }
 
-export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
+export function Comparison({ players, roundWins, readyToReset, onReset }: ComparisonProps) {
   const [currentStatIndex, setCurrentStatIndex] = useState(-1);
   const [scores, setScores] = useState<number[]>(new Array(players.length).fill(0));
   const [isFinished, setIsFinished] = useState(false);
   const [blackFlashes, setBlackFlashes] = useState<boolean[][]>([]);
   const [showExpansionConfirm, setShowExpansionConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [hasClickedReset, setHasClickedReset] = useState(false);
 
   const getWinners = () => {
     const maxScore = Math.max(...scores);
@@ -600,14 +602,29 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
           </div>
           
           {!showResetConfirm ? (
-            <motion.button
-              whileHover={{ scale: 1.05, borderColor: "rgba(234,179,8,0.8)" }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowResetConfirm(true)}
-              className="mt-8 px-12 py-5 bg-[#111] hover:bg-zinc-900 text-yellow-500 rounded-full font-mono font-black uppercase tracking-[0.2em] transition-all border border-yellow-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.2)] relative z-10"
-            >
-              {isMultiplayer ? "[ Ready for New Round ]" : "[ New Matchup ]"}
-            </motion.button>
+            <div className="flex flex-col items-center gap-2 relative z-10 mt-8">
+              <motion.button 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 }}
+                disabled={hasClickedReset}
+                onClick={() => {
+                  if (!readyToReset) {
+                    onReset(getWinners(), scores);
+                  } else {
+                    setShowResetConfirm(true);
+                  }
+                }}
+                className={`px-8 py-4 ${hasClickedReset ? 'bg-zinc-900 border-yellow-500/30 text-yellow-500/50 cursor-not-allowed' : 'bg-zinc-950 border-white/10 text-zinc-400 hover:text-white hover:border-white/30'} border rounded-xl font-mono text-sm tracking-[0.2em] uppercase transition-all shadow-xl`}
+              >
+                {hasClickedReset || (readyToReset && readyToReset.some(r => r))
+                  ? `[ Waiting for Players: ${readyToReset ? readyToReset.filter(Boolean).length : 0} / ${readyToReset ? readyToReset.length : 0} ]`
+                  : readyToReset ? "[ Ready for New Round ]" : "[ New Matchup ]"}
+              </motion.button>
+              {(hasClickedReset || (readyToReset && readyToReset.some(r => r))) && (
+                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest animate-pulse">Waiting for all players to accept...</p>
+              )}
+            </div>
           ) : (
             <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center">
               <motion.div 
@@ -623,6 +640,7 @@ export function Comparison({ players, roundWins, onReset }: ComparisonProps) {
                   <button 
                     onClick={() => {
                       setShowResetConfirm(false);
+                      setHasClickedReset(true);
                       onReset(getWinners(), scores);
                     }}
                     className="flex-1 py-4 bg-yellow-500 text-black font-black uppercase tracking-[0.2em] rounded-xl hover:bg-yellow-400 transition-colors shadow-[0_0_30px_rgba(234,179,8,0.3)]"

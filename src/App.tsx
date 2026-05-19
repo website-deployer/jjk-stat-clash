@@ -33,7 +33,7 @@ export default function App() {
 
 function FeedbackSwitcher() {
   const location = useLocation();
-  const isPlayHub = location.pathname === '/play';
+  const isPlayHub = location.pathname === '/';
   
   return (
     <AnimatePresence>
