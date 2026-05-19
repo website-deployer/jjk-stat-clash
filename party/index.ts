@@ -167,6 +167,8 @@ export default class DraftServer implements PartyServer {
     }
 
     if (data.type === 'finishGambleTurn' && pIndex === this.state.activePlayer && this.state.draftPhase === 'drafting') {
+      // Stop the timer immediately so auto-pick can't fire after confirm
+      if (this.timerInterval) clearInterval(this.timerInterval);
       this.state.currentRollingStat = null;
       this.advanceTurn();
     }
@@ -293,8 +295,17 @@ export default class DraftServer implements PartyServer {
     }, 1000);
   }
 
+  advanceTurn() {
+    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
+    
+    // Clear the current timer before doing anything
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    
+    const allFull = this.state.players.every((p: any) =>
+      statsList.every(s => p.draft[s] !== null)
+    );
+
     if (allFull) {
-      if (this.timerInterval) clearInterval(this.timerInterval);
       this.state.draftPhase = 'draftComplete';
       this.broadcastState();
       
@@ -311,6 +322,7 @@ export default class DraftServer implements PartyServer {
     const currentPlayerId = this.state.players[this.state.activePlayer].id;
     if (this.state.extraTurns[currentPlayerId] > 0) {
       this.state.extraTurns[currentPlayerId]--;
+      this.state.currentRollingStat = null;
       this.state.timeLeft = 30;
       this.broadcastState();
       this.startTimer();
@@ -327,12 +339,16 @@ export default class DraftServer implements PartyServer {
     }
 
     this.state.activePlayer = nextPlayer;
+    this.state.currentRollingStat = null;
     this.state.timeLeft = 30;
     this.broadcastState();
     this.startTimer();
   }
 
   autoPickForActivePlayer() {
+    // Stop the timer immediately to prevent double-fires
+    if (this.timerInterval) clearInterval(this.timerInterval);
+
     const pIndex = this.state.activePlayer;
     const player = this.state.players[pIndex];
     if (!player) return this.advanceTurn();
@@ -363,12 +379,20 @@ export default class DraftServer implements PartyServer {
 
     if (this.state.draftMode === 'gamble') {
       const gState = this.state.gambleStates[player.id];
-      let statToResolve = this.state.currentRollingStat;
+      const rolledStat = this.state.currentRollingStat;
       
-      if (!statToResolve) {
+      if (rolledStat && player.draft[rolledStat] !== null) {
+        // Player already rolled a stat this turn and has a value — just accept it
+        this.state.currentRollingStat = null;
+        this.advanceTurn();
+      } else {
+        // Player hasn't rolled anything this turn — auto-roll a random stat for them
         const emptyStats = statsList.filter(s => player.draft[s] === null);
-        if (emptyStats.length === 0) return this.advanceTurn();
-        statToResolve = emptyStats[Math.floor(Math.random() * emptyStats.length)];
+        if (emptyStats.length === 0) {
+          this.state.currentRollingStat = null;
+          return this.advanceTurn();
+        }
+        const statToResolve = emptyStats[Math.floor(Math.random() * emptyStats.length)];
         
         const category = statCategoryMap[statToResolve];
         const validIds = categoryToIds[category] || categoryToIds['character'];
@@ -387,10 +411,9 @@ export default class DraftServer implements PartyServer {
           statRolls: { ...gState.statRolls, [statToResolve]: (gState.statRolls[statToResolve] || 0) + 1 }
         };
         player.draft[statToResolve] = randomId;
+        this.state.currentRollingStat = null;
+        this.advanceTurn();
       }
-      
-      this.state.currentRollingStat = null;
-      this.advanceTurn();
     } else {
       const emptyStats = statsList.filter(s => player.draft[s] === null);
       if (emptyStats.length === 0) return this.advanceTurn();
