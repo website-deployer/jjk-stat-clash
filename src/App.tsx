@@ -10,6 +10,7 @@ import LocalDraft from './pages/LocalDraft';
 import BotDraft from './pages/BotDraft';
 import MultiplayerLobby from './pages/MultiplayerLobby';
 import MultiplayerDraft from './pages/MultiplayerDraft';
+import Leaderboard from './pages/Leaderboard';
 import { FeedbackSystem } from './components/FeedbackSystem';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/play/bot" element={<BotDraft />} />
           <Route path="/play/multiplayer" element={<MultiplayerLobby />} />
           <Route path="/play/multiplayer/draft/:roomId" element={<MultiplayerDraft />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
         <FeedbackSwitcher />
         <Analytics />
@@ -33,11 +35,11 @@ export default function App() {
 
 function FeedbackSwitcher() {
   const location = useLocation();
-  const isPlayHub = location.pathname === '/';
+  const isGamePage = location.pathname.startsWith('/play');
   
   return (
     <AnimatePresence>
-      {isPlayHub && <FeedbackSystem key="feedback-system" />}
+      {isGamePage && <FeedbackSystem />}
     </AnimatePresence>
   );
 }

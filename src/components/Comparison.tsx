@@ -4,6 +4,7 @@ import { DraftSelection } from './PlayerCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Swords, Zap } from 'lucide-react';
 import { ClashRow } from './ClashRow';
+import { initializePlayer, recordMatchResult } from '../utils/leaderboard';
 
 interface ComparisonProps {
   players: DraftSelection[];
@@ -34,6 +35,34 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, []);
+
+  // Record match results to leaderboard when comparison finishes
+  useEffect(() => {
+    if (isFinished) {
+      const winners = getWinners();
+      
+      players.forEach((player, index) => {
+        const playerName = player.playerName || `Player ${index + 1}`;
+        const playerId = `${playerName}-${Date.now()}`; // Simple ID generation
+        const won = winners.includes(index);
+        
+        // Calculate best synergy combo
+        const activePairings = pairings.filter(pairing =>
+          pairing.entities.every(id => Object.values(player).includes(id))
+        );
+        const bestSynergy = activePairings.length > 0 
+          ? activePairings[0].name 
+          : '';
+
+        // Initialize player and record result
+        initializePlayer(playerId, playerName).then(() => {
+          recordMatchResult(playerId, playerName, won, bestSynergy);
+        }).catch(err => {
+          console.error('Failed to record match result:', err);
+        });
+      });
+    }
+  }, [isFinished, players]);
 
   useEffect(() => {
     // Generate a deterministic seed based on draft picks and round count

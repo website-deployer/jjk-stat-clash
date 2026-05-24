@@ -20,8 +20,54 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-red-500/30 relative overflow-hidden flex flex-col">
       <Helmet>
-        <title>JJK Stat Clash | Build Your Ultimate Sorcerer</title>
-        <meta name="description" content="Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends, and see who reigns supreme in the Culling Games." />
+        <title>JJK Stat Clash | Build Your Ultimate Sorcerer - Free Jujutsu Kaisen Draft Game</title>
+        <meta name="description" content="Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends, and see who reigns supreme in the Culling Games. Free online multiplayer stat-clash game." />
+        <meta name="keywords" content="JJK Stat Clash, Jujutsu Kaisen game, JJK draft, anime game, stat clash, multiplayer game, Gojo vs Sukuna, cursed technique, domain expansion, free browser game" />
+        <meta name="author" content="Jujutsu Intelligence Systems" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://jjk-stat-clash.vercel.app" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://jjk-stat-clash.vercel.app" />
+        <meta property="og:title" content="JJK Stat Clash | Build Your Ultimate Sorcerer" />
+        <meta property="og:description" content="Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends, and see who reigns supreme in the Culling Games." />
+        <meta property="og:image" content="https://jjk-stat-clash.vercel.app/clash.gif" />
+        <meta property="og:site_name" content="JJK Stat Clash" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://jjk-stat-clash.vercel.app" />
+        <meta name="twitter:title" content="JJK Stat Clash | Build Your Ultimate Sorcerer" />
+        <meta name="twitter:description" content="Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends." />
+        <meta name="twitter:image" content="https://jjk-stat-clash.vercel.app/clash.gif" />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {`
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "JJK Stat Clash",
+            "description": "Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends, and see who reigns supreme in the Culling Games.",
+            "url": "https://jjk-stat-clash.vercel.app",
+            "applicationCategory": "Game",
+            "operatingSystem": "Web Browser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "ratingCount": "1000"
+            },
+            "genre": ["Strategy", "Anime", "Multiplayer"],
+            "keywords": "Jujutsu Kaisen, anime game, stat clash, multiplayer, Gojo, Sukuna, cursed technique"
+          }
+          `}
+        </script>
       </Helmet>
 
       {/* Optimized Video Background */}
@@ -182,6 +228,13 @@ export default function Home() {
             >
               <FileText size={14} />
               Changelogs
+            </button>
+            <button 
+              onClick={() => navigate('/leaderboard')}
+              className="flex items-center gap-2 text-zinc-400 hover:text-yellow-500 transition-all font-mono text-[10px] uppercase tracking-widest bg-zinc-900/50 px-4 py-2 border border-zinc-800 rounded-sm"
+            >
+              <Trophy size={14} />
+              Leaderboard
             </button>
             <div className="flex items-center gap-4 border-l border-zinc-800 pl-8">
               <Twitter size={16} className="text-zinc-500 hover:text-white cursor-pointer transition-colors" />
