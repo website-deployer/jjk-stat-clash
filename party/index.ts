@@ -314,7 +314,7 @@ export default class DraftServer implements PartyServer {
            this.state.draftPhase = 'transitioning';
            this.broadcastState();
         }
-      }, 15000) as any;
+      }, 15000) as unknown as ReturnType<typeof setInterval>;
       return;
     }
 

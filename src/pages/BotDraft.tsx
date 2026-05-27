@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { characters, statsList, statLabels, categoryLabels, pairings, statCategoryMap, Entity } from '../data/characters';
 import { PlayerCard, DraftSelection, SearchableSelect, bindingVows } from '../components/PlayerCard';
+import { DraftTimer } from '../components/DraftTimer';
+import { AchievementsModal } from '../components/Achievements';
+import { StatsModal } from '../components/StatsModal';
 import { Comparison } from '../components/Comparison';
 import { CursedConvergenceTransition } from '../components/CursedConvergenceTransition';
 import { PhaseTransition } from '../components/PhaseTransition';
+import { HelpPage } from '../components/HelpPage';
+import { GameNavbar } from '../components/GameNavbar';
+import { HowToPlayTutorial } from '../components/HowToPlayTutorial';
+import { FeedbackSystem } from '../components/FeedbackSystem';
 import { motion, AnimatePresence } from 'motion/react';
 import { SystemProtocol } from '../components/SystemProtocol';
-import { Swords, Ban, CheckCircle2, Trophy, Clock, Cpu, ArrowLeft, Dices, Sparkles, Target, Zap, Shield, AlertTriangle, Skull } from 'lucide-react';
+import { Swords, Ban, CheckCircle2, Trophy, Clock, Cpu, ArrowLeft, Dices, Sparkles, Target, Zap, Shield, AlertTriangle, Skull, X, HelpCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getBotPick } from '../utils/botLogic';
+import { saveDraft, saveFullGameState, loadFullGameState, getSavedDrafts, deleteDraft, SavedDraft } from '../utils/draftStorage';
 import { Helmet } from 'react-helmet-async';
 
 const TURN_TIME_SECONDS = 30;
@@ -48,14 +56,13 @@ export default function BotDraft() {
   const [extraTurns, setExtraTurns] = useState<Record<number, number>>({});
   const [timeLeft, setTimeLeft] = useState<number>(TURN_TIME_SECONDS);
   const [activeOverlay, setActiveOverlay] = useState<'ban' | 'clash' | 'startToBan' | 'startToDraft' | 'banToDraft' | 'transitioning' | 'gambleConfig' | null>(null);
-
-  // Initialize
-  useEffect(() => {
-    const newPlayers = [...players];
-    newPlayers[0].playerName = "Human Sorcerer";
-    newPlayers[1].playerName = `AI Protocol: ${difficulty?.toUpperCase()}`;
-    setPlayers(newPlayers);
-  }, [difficulty]);
+  const [isSavedDraftsOpen, setIsSavedDraftsOpen] = useState(false);
+  const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerDuration] = useState(120);
 
   const allSelected = players.every(draft => statsList.every(stat => draft[stat] !== null));
 
@@ -398,7 +405,7 @@ export default function BotDraft() {
 
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden flex flex-col items-center">
+    <div className="min-h-screen bg-[#050505] text-white font-sans relative overflow-x-hidden flex flex-col items-center pb-20">
       <Helmet><title>Vs Bot | JJK Stat Clash</title></Helmet>
       
       {/* Background elements common to all phases */}
@@ -423,6 +430,22 @@ export default function BotDraft() {
 
             {!difficulty ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                <motion.button
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0 }}
+                  onClick={() => setIsSavedDraftsOpen(true)}
+                  className="flex flex-col items-center p-8 rounded-3xl border-2 border-zinc-800 bg-zinc-900/40 backdrop-blur-sm transition-all duration-500 group relative overflow-hidden hover:border-zinc-600 hover:bg-zinc-800/50"
+                  whileHover={{ y: -10 }}
+                >
+                  <div className="mb-6 transform group-hover:scale-110 transition-transform duration-500">
+                    <Clock className="text-zinc-400" size={32} />
+                  </div>
+                  <h2 className="text-3xl font-black uppercase tracking-widest mb-4 font-display text-zinc-400">Load Draft</h2>
+                  <p className="text-zinc-600 font-mono text-[10px] text-center uppercase tracking-widest leading-relaxed">
+                    Load a saved draft
+                  </p>
+                </motion.button>
                 {[
                   {
                     id: 'easy',
@@ -500,7 +523,6 @@ export default function BotDraft() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => { 
-                      console.log("Standard clicked");
                       setDraftMode('normal'); 
                       setActiveOverlay('startToBan');
                     }}
@@ -515,7 +537,6 @@ export default function BotDraft() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => { 
-                      console.log("Cursed Lottery clicked");
                       setDraftMode('gamble'); 
                       setDraftPhase('gambleConfig');
                     }}
@@ -539,9 +560,18 @@ export default function BotDraft() {
                 <span className={`text-xs font-mono font-bold px-3 py-1 rounded ${activePlayer === 1 ? 'bg-red-500/20 text-red-500 border border-red-500/50 animate-pulse' : 'text-zinc-500'}`}>BOT TURN</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Clock className={timeLeft <= 5 && activePlayer === 0 ? 'text-red-500 animate-bounce' : 'text-zinc-400'} size={20} />
-                <span className={`text-2xl font-mono font-black ${timeLeft <= 5 && activePlayer === 0 ? 'text-red-500' : 'text-white'}`}>00:{timeLeft.toString().padStart(2, '0')}</span>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleSaveDraft}
+                  className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600 rounded-lg font-mono text-xs uppercase tracking-widest transition-all"
+                >
+                  <Clock size={14} />
+                  Save
+                </button>
+                <div className="flex items-center gap-3">
+                  <Clock className={timeLeft <= 5 && activePlayer === 0 ? 'text-red-500 animate-bounce' : 'text-zinc-400'} size={20} />
+                  <span className={`text-2xl font-mono font-black ${timeLeft <= 5 && activePlayer === 0 ? 'text-red-500' : 'text-white'}`}>00:{timeLeft.toString().padStart(2, '0')}</span>
+                </div>
               </div>
             </div>
           )}
@@ -698,7 +728,7 @@ export default function BotDraft() {
 
             {draftPhase === 'drafting' && (
               <div className="flex flex-col items-center gap-8 w-full">
-                <div className="flex flex-wrap justify-center gap-8 w-full items-start relative z-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full justify-items-center items-start relative z-20">
                   {players.map((draft, index) => (
                     <div key={index} className={`relative ${activePlayer !== index ? 'opacity-60 pointer-events-none' : 'ring-4 ring-blue-500/50 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)]'}`}>
                       {index === 1 && activePlayer === 1 && (
@@ -725,9 +755,41 @@ export default function BotDraft() {
                         isTurn={index === activePlayer}
                         activeRollingStat={index === activePlayer ? activeRollingStat : null}
                         onFinishGambleTurn={handleFinishGambleTurn}
+                        isOnlineMode={false}
                       />
                     </div>
                   ))}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <DraftTimer
+                    isActive={timerEnabled && draftPhase === 'drafting'}
+                    duration={timerDuration}
+                    onTimeUp={() => {
+                      if (activePlayer === 0) {
+                        const emptyStat = statsList.find(s => players[0][s] === null);
+                        if (emptyStat) {
+                          const category = statCategoryMap[emptyStat] || 'character';
+                          const available = characters.filter(
+                            e => e.category === category && !Object.values(players[0]).includes(e.id)
+                          );
+                          if (available.length > 0) {
+                            handleSelect(0, emptyStat, available[0].id);
+                          }
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => setTimerEnabled(!timerEnabled)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider border transition-colors ${
+                      timerEnabled
+                        ? 'bg-red-950/40 border-red-800/40 text-red-400'
+                        : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                    }`}
+                  >
+                    Timer {timerEnabled ? 'ON' : 'OFF'}
+                  </button>
                 </div>
 
                 <SystemProtocol
@@ -762,6 +824,20 @@ export default function BotDraft() {
                 <Comparison
                   players={players}
                   roundWins={roundWins}
+                  isMultiplayer={false}
+                  onPlayAgain={() => {
+                    setPlayers([emptyDraft(), emptyDraft()]);
+                    setBans([[], []]);
+                    setRoundWins([0, 0]);
+                    setMatchHistory([]);
+                    setGambleStates({
+                      0: { remainingTotal: gambleConfig.totalRolls, remainingLucky: gambleConfig.luckyRolls, statRolls: {} },
+                      1: { remainingTotal: gambleConfig.totalRolls, remainingLucky: gambleConfig.luckyRolls, statRolls: {} }
+                    });
+                    setDraftPhase('setup');
+                    setActivePlayer(0);
+                    setTimeLeft(TURN_TIME_SECONDS);
+                  }}
                   onReset={(winners, finalScores) => {
                     const newWins = [...roundWins];
                     winners.forEach(w => newWins[w]++);
@@ -810,8 +886,8 @@ export default function BotDraft() {
         {activeOverlay === 'banToDraft' && (
           <PhaseTransition
             key="banToDraft"
-            topKanji="呪術"
-            topEnglish="SORCERY PHASE"
+            topKanji="選定"
+            topEnglish="DRAFT PHASE"
             bottomPhase="PHASE 02"
             bottomTitle="DRAFT SELECTION"
             onPhaseSwap={() => setDraftPhase('drafting')}
@@ -826,6 +902,157 @@ export default function BotDraft() {
           />
         )}
       </AnimatePresence>
+
+      {/* Save Confirmation Modal */}
+      <AnimatePresence>
+        {isSaveConfirmOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSaveConfirmOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#0a0a0a] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-zinc-800 bg-[#050505]">
+                <h2 className="text-xl font-black font-display text-white uppercase tracking-tighter">Save Draft</h2>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-zinc-400 font-mono text-sm">Save your current draft to localStorage?</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsSaveConfirmOpen(false)}
+                    className="flex-1 px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600 rounded-lg font-mono text-xs uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmSaveDraft}
+                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-mono text-xs uppercase tracking-widest hover:bg-green-500 transition-all"
+                  >
+                    Save Draft
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Saved Drafts Modal */}
+      <AnimatePresence>
+        {isSavedDraftsOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSavedDraftsOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-[#0a0a0a] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-[#050505]">
+                <h2 className="text-xl font-black font-display text-white uppercase tracking-tighter">Saved Drafts</h2>
+                <button
+                  onClick={() => setIsSavedDraftsOpen(false)}
+                  className="text-zinc-500 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {savedDrafts.length === 0 ? (
+                  <p className="text-zinc-500 font-mono text-sm text-center">No saved drafts yet</p>
+                ) : (
+                  savedDrafts.map((saved) => (
+                    <div
+                      key={saved.id}
+                      className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg flex items-center justify-between hover:border-zinc-700 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <p className="text-white font-mono text-sm font-bold">{saved.name}</p>
+                        <p className="text-zinc-500 font-mono text-xs">{new Date(saved.timestamp).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleLoadDraft(saved)}
+                          className="px-3 py-1 bg-green-600 text-white text-xs font-mono uppercase rounded hover:bg-green-500 transition-colors"
+                        >
+                          Load
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(saved.id)}
+                          className="px-3 py-1 bg-red-600 text-white text-xs font-mono uppercase rounded hover:bg-red-500 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              {deleteConfirmId && (
+                <div className="p-6 border-t border-zinc-800 bg-black/50">
+                  <p className="text-zinc-300 text-sm mb-4 font-mono uppercase tracking-widest text-center">Delete this saved draft?</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        handleDeleteDraft(deleteConfirmId);
+                        setDeleteConfirmId(null);
+                      }}
+                      className="flex-1 py-2 bg-red-600 text-white text-sm font-mono uppercase rounded hover:bg-red-500 transition-colors"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(null)}
+                      className="flex-1 py-2 bg-zinc-800 text-zinc-400 text-sm font-mono uppercase rounded hover:bg-zinc-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <HelpPage isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+
+      {/* Game Navbar */}
+      {draftPhase !== 'setup' && draftPhase !== 'gambleConfig' && (
+        <GameNavbar
+          onHowToPlay={() => setIsHowToPlayOpen(true)}
+          onSystemArchives={() => setIsHelpOpen(true)}
+          onFeedback={() => setIsFeedbackOpen(true)}
+          onAchievements={() => setIsAchievementsOpen(true)}
+          onStats={() => setIsStatsOpen(true)}
+        />
+      )}
+
+      {/* How to Play Tutorial */}
+      <HowToPlayTutorial isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
+
+      {/* Feedback System */}
+      <FeedbackSystem hidden={true} isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+
+      {/* Achievements Modal */}
+      <AchievementsModal isOpen={isAchievementsOpen} onClose={() => setIsAchievementsOpen(false)} />
+
+      {/* Stats Modal */}
+      <StatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
     </div>
   );
 }

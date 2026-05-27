@@ -15,8 +15,10 @@ interface FeedbackEntry {
   timestamp: string;
 }
 
-export function FeedbackSystem({ hidden = false }: { hidden?: boolean }) {
-  const [isOpen, setIsOpen] = useState(false);
+export function FeedbackSystem({ hidden = false, isOpen: externalIsOpen, onClose }: { hidden?: boolean; isOpen?: boolean; onClose?: () => void }) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = onClose ? () => onClose() : setInternalIsOpen;
   const [view, setView] = useState<'form' | 'vault'>('form');
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
   

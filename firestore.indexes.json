@@ -1,0 +1,12 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "leaderboards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "winRate", "order": "DESCENDING" },
+        { "fieldPath": "totalWins", "order": "DESCENDING" }
+      ]
+    }
+  ]
+}

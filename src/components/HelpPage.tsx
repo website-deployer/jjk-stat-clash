@@ -124,7 +124,32 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
                 <div className="max-w-4xl mx-auto space-y-16">
                   <section>
                     <h3 className="text-2xl font-black text-white uppercase font-display mb-8 flex items-center gap-3">
-                      <Zap className="text-yellow-500" /> Draft Mechanics
+                      <Zap className="text-yellow-500" /> Game Overview
+                    </h3>
+                    <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">
+                      <p className="text-zinc-400 text-xs leading-relaxed mb-4">
+                        JJK Stat Clash is a competitive drafting game where you build a sorcerer by selecting entities across 11 categories, then battle against opponents in stat-based combat. The goal is to create synergies and maximize your power to win head-to-head stat comparisons.
+                      </p>
+                      <div className="grid md:grid-cols-3 gap-4 mt-6">
+                        <div className="bg-zinc-800/50 p-4 rounded-lg border border-zinc-700">
+                          <h5 className="text-white font-bold text-xs uppercase mb-2">Step 1: Ban</h5>
+                          <p className="text-zinc-500 text-[10px] leading-relaxed">Remove 2 entities from the pool to weaken opponents</p>
+                        </div>
+                        <div className="bg-zinc-800/50 p-4 rounded-lg border border-zinc-700">
+                          <h5 className="text-white font-bold text-xs uppercase mb-2">Step 2: Draft</h5>
+                          <p className="text-zinc-500 text-[10px] leading-relaxed">Fill 11 slots with characters, techniques, and abilities</p>
+                        </div>
+                        <div className="bg-zinc-800/50 p-4 rounded-lg border border-zinc-700">
+                          <h5 className="text-white font-bold text-xs uppercase mb-2">Step 3: Clash</h5>
+                          <p className="text-zinc-500 text-[10px] leading-relaxed">Compare stats head-to-head to win rounds</p>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-2xl font-black text-white uppercase font-display mb-8 flex items-center gap-3">
+                      <Swords className="text-red-500" /> Draft Mechanics
                     </h3>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800 hover:border-red-900/40 transition-colors">
@@ -133,7 +158,7 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
                           <h4 className="text-white font-display text-sm uppercase tracking-widest font-bold">Banning Phase</h4>
                         </div>
                         <p className="text-zinc-400 text-xs leading-relaxed">
-                          The game begins by sealing power. Each player selects 2 entities (Characters, Techniques, or Tools) to remove from the global pool. Strategic bans can dismantle entire build archetypes before they begin.
+                          The game begins by sealing power. Each player selects 2 entities (Characters, Techniques, or Tools) to remove from the global pool. Strategic bans can dismantle entire build archetypes before they begin. Consider banning high-tier characters or key synergy components.
                         </p>
                       </div>
                       <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800 hover:border-red-900/40 transition-colors">
@@ -142,7 +167,7 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
                           <h4 className="text-white font-display text-sm uppercase tracking-widest font-bold">11 Slot Protocol</h4>
                         </div>
                         <p className="text-zinc-400 text-xs leading-relaxed">
-                          Build your sorcerer across 11 distinct categories. Every choice contributes specialized stat points. Note: Some abilities have <span className="text-red-500">Prerequisites</span> (e.g., Limitless requires Six Eyes).
+                          Build your sorcerer across 11 distinct categories: Character, Strength, Speed, Durability, CE, Body, IQ, Cursed Technique, Tool, Shikigami, and Domain Expansion. Every choice contributes specialized stat points. Note: Some abilities have <span className="text-red-500">Prerequisites</span> (e.g., Limitless requires Six Eyes).
                         </p>
                       </div>
                     </div>
@@ -150,27 +175,60 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
 
                   <section>
                     <h3 className="text-2xl font-black text-white uppercase font-display mb-8 flex items-center gap-3">
-                      <Brain className="text-purple-500" /> Niche Battle Features
+                      <Target className="text-blue-500" /> Stat Categories Explained
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-zinc-900/30 rounded-xl p-4 border border-zinc-800">
+                        <h5 className="text-white font-bold text-xs uppercase mb-2">Physical Stats</h5>
+                        <ul className="text-zinc-500 text-[10px] space-y-1">
+                          <li><span className="text-red-400">Strength:</span> Raw physical power, affects melee damage</li>
+                          <li><span className="text-red-400">Speed:</span> Movement and attack speed, determines initiative</li>
+                          <li><span className="text-red-400">Durability:</span> Defense and health, ability to withstand attacks</li>
+                          <li><span className="text-red-400">Body:</span> Physical mastery, increases Black Flash chance</li>
+                        </ul>
+                      </div>
+                      <div className="bg-zinc-900/30 rounded-xl p-4 border border-zinc-800">
+                        <h5 className="text-white font-bold text-xs uppercase mb-2">Cursed Stats</h5>
+                        <ul className="text-zinc-500 text-[10px] space-y-1">
+                          <li><span className="text-purple-400">CE (Cursed Energy):</span> Energy reserves for techniques</li>
+                          <li><span className="text-purple-400">IQ (Battle IQ):</span> Tactical intelligence, affects domain clashes</li>
+                          <li><span className="text-purple-400">CT (Cursed Technique):</span> Special ability selection</li>
+                          <li><span className="text-purple-400">DE (Domain Expansion):</span> Ultimate technique, sure-hit effect</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-2xl font-black text-white uppercase font-display mb-8 flex items-center gap-3">
+                      <Brain className="text-purple-500" /> Advanced Mechanics
                     </h3>
                     <div className="grid gap-4">
                       <div className="group bg-zinc-900/30 rounded-2xl p-6 border border-zinc-800 hover:bg-zinc-900/50 transition-all">
                         <h4 className="text-zinc-200 font-bold uppercase tracking-widest text-sm mb-3 group-hover:text-red-500 transition-colors">Domain Clashes & Refinement</h4>
                         <p className="text-zinc-500 text-xs leading-relaxed">
-                          When two Domain Expansions clash, the one with the higher <span className="text-purple-400">Battle IQ (IQ)</span> and <span className="text-purple-400">Cursed Energy (CE)</span> is considered more "refined." The refined domain will gradually erode the opponent's barrier until it collapses, granting the user full "Sure-Hit" access.
+                          When two Domain Expansions clash, the one with the higher <span className="text-purple-400">Battle IQ (IQ)</span> and <span className="text-purple-400">Cursed Energy (CE)</span> is considered more "refined." The refined domain will gradually erode the opponent's barrier until it collapses, granting the user full "Sure-Hit" access. Domain Expansion efficiency is calculated as: (IQ + CE) / 2.
                         </p>
                       </div>
 
                       <div className="group bg-zinc-900/30 rounded-2xl p-6 border border-zinc-800 hover:bg-zinc-900/50 transition-all">
                         <h4 className="text-zinc-200 font-bold uppercase tracking-widest text-sm mb-3 group-hover:text-yellow-500 transition-colors">Black Flash Trait</h4>
                         <p className="text-zinc-500 text-xs leading-relaxed">
-                          Any physical attack has a rare chance to trigger a <span className="text-yellow-400">Black Flash</span>. This distortion in space multiplies the strike's power by exactly <span className="text-white font-bold">2.5</span>. Characters with high "Body" stats and martial arts proficiency have a higher chance of entering the "Zone."
+                          Any physical attack has a rare chance to trigger a <span className="text-yellow-400">Black Flash</span>. This distortion in space multiplies the strike's power by exactly <span className="text-white font-bold">2.5</span>. Characters with high "Body" stats and martial arts proficiency have a higher chance of entering the "Zone." Base chance is 1.5%, but can be boosted by Body stat and abilities.
                         </p>
                       </div>
 
                       <div className="group bg-zinc-900/30 rounded-2xl p-6 border border-zinc-800 hover:bg-zinc-900/50 transition-all">
-                        <h4 className="text-zinc-200 font-bold uppercase tracking-widest text-sm mb-3 group-hover:text-blue-500 transition-colors">Binding Vows & Overtime</h4>
+                        <h4 className="text-zinc-200 font-bold uppercase tracking-widest text-sm mb-3 group-hover:text-blue-500 transition-colors">Binding Vows</h4>
                         <p className="text-zinc-500 text-xs leading-relaxed">
-                          Certain characters trigger secret buffs based on game state. <span className="text-blue-400 font-bold">Nanami Kento</span> triggers his "Overtime" vow after Round 3, gaining a 30% boost to CE and Output. Always read the lore descriptions for hidden mechanical hints.
+                          Binding Vows are high-risk, high-reward abilities that sacrifice certain stats to boost others. For example, "Life Gamble" drops Durability to 1 but doubles Strength and Speed. These can turn the tide of battle but leave you vulnerable. Choose wisely based on your build strategy.
+                        </p>
+                      </div>
+
+                      <div className="group bg-zinc-900/30 rounded-2xl p-6 border border-zinc-800 hover:bg-zinc-900/50 transition-all">
+                        <h4 className="text-zinc-200 font-bold uppercase tracking-widest text-sm mb-3 group-hover:text-green-500 transition-colors">Synergies</h4>
+                        <p className="text-zinc-500 text-xs leading-relaxed">
+                          Certain combinations of entities grant bonus stats. For example, pairing "Gojo Satoru" with "Six Eyes" grants massive bonuses to CE and IQ. Some synergies are public and listed in the Known Bonds tab, while others are secret and must be discovered through experimentation. Building around synergies is key to victory.
                         </p>
                       </div>
                     </div>
@@ -193,15 +251,45 @@ export function HelpPage({ isOpen, onClose }: HelpPageProps) {
                       <div>
                         <span className="text-xs font-bold text-zinc-300 uppercase tracking-widest block mb-2">Zero Cursed Energy (Toji/Maki)</span>
                         <p className="text-zinc-500 text-xs leading-relaxed">
-                          These entities cannot be targeted by domain simple barrier logic. They gain absolute immunity to "Sure-Hit" effects. However, their CE, CT, and DE slots contribute 0 value, forcing a focus on Tools and Pure Physicality.
+                          These entities cannot be targeted by domain simple barrier logic. They gain absolute immunity to "Sure-Hit" effects. However, their CE, CT, and DE slots contribute 0 value, forcing a focus on Tools and Pure Physicality. This makes them excellent counters to domain-heavy builds.
                         </p>
                       </div>
                       <div>
                         <span className="text-xs font-bold text-zinc-300 uppercase tracking-widest block mb-2">High Output / Low Life (Mechamaru)</span>
                         <p className="text-zinc-500 text-xs leading-relaxed">
-                          Born with immense range and power in exchange for a destroyed body. These builds excel in CE output but suffer massive penalties to Durability and Speed.
+                          Born with immense range and power in exchange for a destroyed body. These builds excel in CE output but suffer massive penalties to Durability and Speed. Use them for long-range dominance but protect them from melee combat.
                         </p>
                       </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-2xl font-black text-white uppercase font-display mb-8 flex items-center gap-3">
+                      <FastForward className="text-green-500" /> Winning Strategy
+                    </h3>
+                    <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">
+                      <ul className="text-zinc-400 text-xs space-y-3">
+                        <li className="flex gap-3">
+                          <span className="text-red-500 font-black">1.</span>
+                          <span><strong className="text-white">Ban strategically:</strong> Remove characters that counter your planned build or are essential to popular synergies.</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-red-500 font-black">2.</span>
+                          <span><strong className="text-white">Build synergies:</strong> Focus on completing known pairings for massive stat bonuses rather than picking individual strong entities.</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-red-500 font-black">3.</span>
+                          <span><strong className="text-white">Balance your stats:</strong> Don't neglect defense. A glass cannon build can be countered by high Durability opponents.</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-red-500 font-black">4.</span>
+                          <span><strong className="text-white">Consider Binding Vows:</strong> If you're behind in certain stats, a Binding Vow can flip the matchup in your favor.</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-red-500 font-black">5.</span>
+                          <span><strong className="text-white">Watch for prerequisites:</strong> Some abilities require specific other abilities (e.g., Limitless needs Six Eyes). Plan accordingly.</span>
+                        </li>
+                      </ul>
                     </div>
                   </section>
                 </div>

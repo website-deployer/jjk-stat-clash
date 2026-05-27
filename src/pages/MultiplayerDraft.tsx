@@ -24,7 +24,7 @@ export default function MultiplayerDraft() {
 
   // Connect to PartyKit using the room ID
   const socket = usePartySocket({
-    host: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'localhost:1999' : 'jjk-stat-clash.website-deployer.partykit.dev',
+    host: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'localhost:1999' : (import.meta.env.VITE_PARTYKIT_HOST || 'jjk-stat-clash.website-deployer.partykit.dev'),
     room: roomId || 'default',
     onOpen: () => {
       setConnectionError(false);
@@ -522,6 +522,7 @@ export default function MultiplayerDraft() {
                     isTurn={gameState.activePlayer === index}
                     activeRollingStat={gameState.currentRollingStat || localActiveRollingStat}
                     onFinishGambleTurn={handleFinishGambleTurn}
+                    isOnlineMode={true}
                   />
                   {myIndex === index && (
                     <div className="absolute -top-3 -right-3 bg-green-500 text-black font-black text-[10px] px-2 py-1 rounded-full uppercase z-50">YOU</div>
@@ -595,6 +596,10 @@ export default function MultiplayerDraft() {
               players={gameState.players.map((p: any) => p.draft)} 
               roundWins={gameState.roundWins}
               readyToReset={gameState.readyToReset}
+              isMultiplayer={true}
+              onPlayAgain={() => {
+                navigate('/play/multiplayer');
+              }}
               onReset={(winners) => {
                 socket.send(JSON.stringify({ type: 'readyToReset' }));
                 if (isHost) {

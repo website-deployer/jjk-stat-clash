@@ -2,29 +2,61 @@ import React, { useState, useEffect } from 'react';
 import { characters, statLabels, statsList, pairings, Pairing } from '../data/characters';
 import { DraftSelection } from './PlayerCard';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Swords, Zap } from 'lucide-react';
+import { Trophy, Swords, Zap, Share2, Check, Sparkles } from 'lucide-react';
 import { ClashRow } from './ClashRow';
 import { initializePlayer, recordMatchResult } from '../utils/leaderboard';
+import { achievements, unlockAchievement, getUnlockedAchievements, type AchievementContext } from '../utils/achievements';
+import { addMatchRecord } from '../utils/playerStats';
 
 interface ComparisonProps {
   players: DraftSelection[];
   roundWins: number[];
   readyToReset?: boolean[];
   onReset: (winners: number[], finalScores: number[]) => void;
+  isMultiplayer?: boolean;
+  onPlayAgain?: () => void;
 }
 
-export function Comparison({ players, roundWins, readyToReset, onReset }: ComparisonProps) {
+export function Comparison({ players, roundWins, readyToReset, onReset, isMultiplayer = false, onPlayAgain }: ComparisonProps) {
   const [currentStatIndex, setCurrentStatIndex] = useState(-1);
   const [scores, setScores] = useState<number[]>(new Array(players.length).fill(0));
   const [isFinished, setIsFinished] = useState(false);
   const [blackFlashes, setBlackFlashes] = useState<boolean[][]>([]);
+  const [newAchievement, setNewAchievement] = useState<string | null>(null);
   const [showExpansionConfirm, setShowExpansionConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showPlayAgainConfirm, setShowPlayAgainConfirm] = useState(false);
   const [hasClickedReset, setHasClickedReset] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const getWinners = () => {
     const maxScore = Math.max(...scores);
     return players.map((_, i) => i).filter(i => scores[i] === maxScore);
+  };
+
+  const handleShare = () => {
+    const winners = getWinners();
+    const winnerNames = winners.map(i => players[i].playerName || `Player ${i + 1}`).join(' & ');
+    
+    // Find best synergy for winner
+    const winnerIndex = winners[0];
+    const activePairings = pairings.filter(pairing =>
+      pairing.entities.every(id => Object.values(players[winnerIndex]).includes(id))
+    );
+    const bestSynergy = activePairings.length > 0 ? activePairings[0].name : 'No special synergy';
+    
+    const shareText = `I just won a JJK Stat Clash match! 🏆
+    
+Winner: ${winnerNames}
+Best Synergy: ${bestSynergy}
+
+Try it yourself: https://jjk-stat-clash.vercel.app
+#JJKStatClash #JujutsuKaisen`;
+
+    navigator.clipboard.writeText(shareText).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    });
   };
 
   const displayWins = [...roundWins];
@@ -36,14 +68,67 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, []);
 
-  // Record match results to leaderboard when comparison finishes
+  // Check achievements when the match finishes
   useEffect(() => {
     if (isFinished) {
+      const unlocked = getUnlockedAchievements();
+      const totalBlackFlashes = blackFlashes.flat().filter(Boolean).length;
+      const activePairingIds = pairings
+        .filter(p => p.entities.every(id => players.some(pl => Object.values(pl).includes(id))))
+        .map(p => p.id);
+      const allSlotsFilled = players.every(pl => statsList.every(s => pl[s] !== null));
+
+      const winners = getWinners();
+      const ctx: AchievementContext = {
+        hasWon: winners.includes(0),
+        roundWins: [],
+        totalWins: winners.length,
+        totalMatches: 1,
+        playerIndex: 0,
+        activePairings: activePairingIds,
+        blackFlashCount: totalBlackFlashes,
+        allSlotsFilled,
+      };
+
+      // Save match record
+      players.forEach((p, i) => {
+        addMatchRecord({
+          date: new Date().toISOString(),
+          mode: 'local',
+          playerCount: players.length,
+          won: winners.includes(i),
+          playerName: p.playerName || `Player ${i + 1}`,
+          score: scores[i] || 0,
+          opponentScore: scores[i === 0 ? 1 : 0] || 0,
+          pairingsUsed: activePairingIds,
+        });
+      });
+
+      for (const a of achievements) {
+        if (!unlocked.includes(a.id) && a.check(ctx)) {
+          if (unlockAchievement(a.id)) {
+            setNewAchievement(a.name);
+            setTimeout(() => setNewAchievement(null), 4000);
+          }
+        }
+      }
+    }
+  }, [isFinished]);
+
+  // Record match results to leaderboard when comparison finishes (only for multiplayer)
+  useEffect(() => {
+    if (isFinished && isMultiplayer) {
       const winners = getWinners();
       
       players.forEach((player, index) => {
         const playerName = player.playerName || `Player ${index + 1}`;
-        const playerId = `${playerName}-${Date.now()}`; // Simple ID generation
+        const PLAYER_UUID_KEY = 'jjk-player-uuid';
+        let playerUuid = localStorage.getItem(PLAYER_UUID_KEY);
+        if (!playerUuid) {
+          playerUuid = crypto.randomUUID();
+          localStorage.setItem(PLAYER_UUID_KEY, playerUuid);
+        }
+        const playerId = `${playerName}-${playerUuid}`;
         const won = winners.includes(index);
         
         // Calculate best synergy combo
@@ -62,7 +147,7 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
         });
       });
     }
-  }, [isFinished, players]);
+  }, [isFinished, players, isMultiplayer]);
 
   useEffect(() => {
     // Generate a deterministic seed based on draft picks and round count
@@ -359,10 +444,26 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
     setIsFinished(false);
   };
 
-  const isMultiplayer = typeof window !== 'undefined' && window.location.pathname.includes('/multiplayer/draft/');
-
   return (
-    <div className="w-full max-w-7xl mx-auto flex flex-col items-center gap-8 p-4">
+    <div className="w-full max-w-7xl mx-auto flex flex-col items-center gap-8 p-4 relative">
+      {/* Achievement Toast */}
+      <AnimatePresence>
+        {newAchievement && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.8 }}
+            className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] bg-yellow-950 border border-yellow-500/50 px-8 py-4 rounded-2xl shadow-[0_0_40px_rgba(234,179,8,0.3)] flex items-center gap-4"
+          >
+            <Sparkles className="text-yellow-400" size={24} />
+            <div>
+              <p className="text-yellow-400 font-black font-display text-lg uppercase tracking-wider">Achievement Unlocked!</p>
+              <p className="text-zinc-300 font-mono text-sm">{newAchievement}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative flex flex-wrap justify-center gap-4 items-center bg-[#0a0a0a]/80 backdrop-blur-md border border-red-900/40 shadow-[0_0_20px_rgba(220,38,38,0.2)] px-6 py-3 rounded-2xl mb-4">
         <div className="absolute inset-0 bg-red-950/5 rounded-2xl pointer-events-none"></div>
         {players.map((p, i) => (
@@ -386,9 +487,9 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
       <div className="w-full max-w-[100vw] pb-6 px-1 lg:px-4">
         <div className="flex flex-col items-center w-full mx-auto max-w-7xl">
           {/* HEADERS */}
-          <div className="w-full mb-8 relative flex justify-center">
+          <div className="w-full mb-8 relative flex justify-center overflow-x-auto custom-scrollbar">
             <div 
-              className="grid w-full relative z-10 px-1 lg:px-4 gap-1 lg:gap-4 max-w-5xl"
+              className="grid w-full relative z-10 px-1 lg:px-4 gap-1 lg:gap-4 max-w-5xl min-w-max"
               style={{ gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` }}
             >
               {/* VS Divider */}
@@ -632,24 +733,47 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
           
           {!showResetConfirm ? (
             <div className="flex flex-col items-center gap-2 relative z-10 mt-8">
-              <motion.button 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 }}
-                disabled={hasClickedReset}
-                onClick={() => {
-                  if (!readyToReset) {
-                    onReset(getWinners(), scores);
-                  } else {
-                    setShowResetConfirm(true);
-                  }
-                }}
-                className={`px-8 py-4 ${hasClickedReset ? 'bg-zinc-900 border-yellow-500/30 text-yellow-500/50 cursor-not-allowed' : 'bg-zinc-950 border-white/10 text-zinc-400 hover:text-white hover:border-white/30'} border rounded-xl font-mono text-sm tracking-[0.2em] uppercase transition-all shadow-xl`}
-              >
-                {hasClickedReset || (readyToReset && readyToReset.some(r => r))
-                  ? `[ Waiting for Players: ${readyToReset ? readyToReset.filter(Boolean).length : 0} / ${readyToReset ? readyToReset.length : 0} ]`
-                  : readyToReset ? "[ Ready for New Round ]" : "[ New Matchup ]"}
-              </motion.button>
+              <div className="flex gap-4 flex-wrap justify-center">
+                <motion.button 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                  onClick={handleShare}
+                  className="px-8 py-4 bg-zinc-950 border border-blue-500/30 text-blue-400 hover:text-blue-300 hover:border-blue-500/50 rounded-xl font-mono text-sm tracking-[0.2em] uppercase transition-all shadow-xl flex items-center gap-2"
+                >
+                  {shareCopied ? <Check size={16} /> : <Share2 size={16} />}
+                  {shareCopied ? '[ Copied! ]' : '[ Share ]'}
+                </motion.button>
+                {onPlayAgain && (
+                  <motion.button 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1 }}
+                    onClick={() => setShowPlayAgainConfirm(true)}
+                    className="px-8 py-4 bg-zinc-950 border border-green-500/30 text-green-400 hover:text-green-300 hover:border-green-500/50 rounded-xl font-mono text-sm tracking-[0.2em] uppercase transition-all shadow-xl"
+                  >
+                    [ Play Again ]
+                  </motion.button>
+                )}
+                <motion.button 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                  disabled={hasClickedReset}
+                  onClick={() => {
+                    if (!readyToReset) {
+                      onReset(getWinners(), scores);
+                    } else {
+                      setShowResetConfirm(true);
+                    }
+                  }}
+                  className={`px-8 py-4 ${hasClickedReset ? 'bg-zinc-900 border-yellow-500/30 text-yellow-500/50 cursor-not-allowed' : 'bg-zinc-950 border-white/10 text-zinc-400 hover:text-white hover:border-white/30'} border rounded-xl font-mono text-sm tracking-[0.2em] uppercase transition-all shadow-xl`}
+                >
+                  {hasClickedReset || (readyToReset && readyToReset.some(r => r))
+                    ? `[ Waiting for Players: ${readyToReset ? readyToReset.filter(Boolean).length : 0} / ${readyToReset ? readyToReset.length : 0} ]`
+                    : readyToReset ? "[ Ready for New Round ]" : "[ New Matchup ]"}
+                </motion.button>
+              </div>
               {(hasClickedReset || (readyToReset && readyToReset.some(r => r))) && (
                 <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest animate-pulse">Waiting for all players to accept...</p>
               )}
@@ -678,6 +802,38 @@ export function Comparison({ players, roundWins, readyToReset, onReset }: Compar
                   </button>
                   <button 
                     onClick={() => setShowResetConfirm(false)}
+                    className="flex-1 py-4 bg-zinc-900 text-zinc-400 font-bold uppercase tracking-[0.2em] border border-zinc-800 rounded-xl hover:bg-zinc-800 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {showPlayAgainConfirm && (
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="flex flex-col items-center gap-6 bg-zinc-950 border border-green-500/50 p-10 rounded-3xl shadow-[0_0_100px_rgba(34,197,94,0.2)] relative"
+              >
+                <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent"></div>
+                <Swords size={48} className="text-green-500 mb-2" />
+                <p className="text-green-500 font-black font-display text-2xl uppercase tracking-widest text-center">New Game?</p>
+                <p className="text-zinc-400 font-mono text-xs uppercase tracking-widest text-center max-w-sm mb-4">This will reset all drafts and scores. Are you sure?</p>
+                <div className="flex gap-4 w-full">
+                  <button 
+                    onClick={() => {
+                      setShowPlayAgainConfirm(false);
+                      onPlayAgain?.();
+                    }}
+                    className="flex-1 py-4 bg-green-500 text-black font-black uppercase tracking-[0.2em] rounded-xl hover:bg-green-400 transition-colors shadow-[0_0_30px_rgba(34,197,94,0.3)]"
+                  >
+                    Confirm
+                  </button>
+                  <button 
+                    onClick={() => setShowPlayAgainConfirm(false)}
                     className="flex-1 py-4 bg-zinc-900 text-zinc-400 font-bold uppercase tracking-[0.2em] border border-zinc-800 rounded-xl hover:bg-zinc-800 hover:text-white transition-colors"
                   >
                     Cancel

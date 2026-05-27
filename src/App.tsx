@@ -1,8 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
-import { AnimatePresence } from 'motion/react';
 
 // Import Pages
 import Home from './pages/Home';
@@ -11,35 +10,27 @@ import BotDraft from './pages/BotDraft';
 import MultiplayerLobby from './pages/MultiplayerLobby';
 import MultiplayerDraft from './pages/MultiplayerDraft';
 import Leaderboard from './pages/Leaderboard';
-import { FeedbackSystem } from './components/FeedbackSystem';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   return (
     <HelmetProvider>
+      <ErrorBoundary>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/play" element={<LocalDraft />} />
-          <Route path="/play/local" element={<LocalDraft />} />
-          <Route path="/play/bot" element={<BotDraft />} />
-          <Route path="/play/multiplayer" element={<MultiplayerLobby />} />
-          <Route path="/play/multiplayer/draft/:roomId" element={<MultiplayerDraft />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+          <Route path="/play" element={<ErrorBoundary><LocalDraft /></ErrorBoundary>} />
+          <Route path="/play/local" element={<ErrorBoundary><LocalDraft /></ErrorBoundary>} />
+          <Route path="/play/bot" element={<ErrorBoundary><BotDraft /></ErrorBoundary>} />
+          <Route path="/play/multiplayer" element={<ErrorBoundary><MultiplayerLobby /></ErrorBoundary>} />
+          <Route path="/play/multiplayer/draft/:roomId" element={<ErrorBoundary><MultiplayerDraft /></ErrorBoundary>} />
+          <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
         </Routes>
-        <FeedbackSwitcher />
         <Analytics />
       </Router>
+      </ErrorBoundary>
     </HelmetProvider>
   );
 }
 
-function FeedbackSwitcher() {
-  const location = useLocation();
-  const isGamePage = location.pathname.startsWith('/play');
-  
-  return (
-    <AnimatePresence>
-      {isGamePage && <FeedbackSystem />}
-    </AnimatePresence>
-  );
-}
+

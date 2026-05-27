@@ -4,6 +4,90 @@ import { X, Terminal, Zap, Shield, Workflow, Eye, Calendar } from 'lucide-react'
 
 const changelogData = [
   {
+    version: "v1.5.0",
+    date: "May 27, 2026",
+    title: "Stability & Progression Protocol",
+    description: "Critical bug fixes, quality-of-life improvements, and introduction of achievement and stats systems.",
+    items: [
+      "Fixed feedback button visibility - now appears on /play start screen and game pages",
+      "Fixed duplicate phase transition overlays causing visual conflicts during phase changes",
+      "Fixed leaderboard player ID persistence - players now accumulate wins across matches using persistent UUID",
+      "Removed debug console logs from production build",
+      "Migrated Firebase configuration to environment variables for security",
+      "Added Firestore composite index for leaderboard queries",
+      "Replaced hardcoded PartyKit URL with environment variable support",
+      "Wrapped all pages in ErrorBoundary for graceful crash recovery",
+      "Added optional turn timer with auto-fill for Local and Bot modes",
+      "Added confirmation dialogs for Play Again and delete saved draft actions",
+      "Responsive grid layout now adapts columns based on player count (2-8 players)",
+      "Introduced Custom Rules panel with configurable ban count (1-3) and timer duration",
+      "Added Achievements system with 10 unlockable challenges and toast notifications",
+      "Added Player Stats dashboard tracking wins, win rate, and match history",
+      "Enhanced Hard bot AI with aggressive synergy pursuit, smarter hate-drafting, and zero randomness in decision making"
+    ]
+  },
+  {
+    version: "v1.4.0",
+    date: "May 25, 2026",
+    title: "Game Navigation & Tutorial Overhaul",
+    description: "Complete restructure of game UI with dedicated navbar/footer and simplified tutorial system.",
+    items: [
+      "Added GameNavbar component with fixed bottom navigation for all game screens",
+      "Created simplified HowToPlayTutorial component separate from System Archives",
+      "How to Play now teaches basic game flow (Ban, Draft, Clash phases) with beginner tips",
+      "System Archives remains as detailed database for advanced players",
+      "Added Feedback button to GameNavbar for balance suggestions",
+      "Added System Archives button to GameNavbar for character database access",
+      "Removed floating buttons from game screens - all navigation now in navbar",
+      "GameNavbar only appears during gameplay phases (not on setup screens)"
+    ]
+  },
+  {
+    version: "v1.3.2",
+    date: "May 25, 2026",
+    title: "Bug Fixes & UX Improvements",
+    description: "Fixed critical bugs and enhanced help documentation for better user onboarding.",
+    items: [
+      "Fixed deprecated 'Sorcery Phase' transition text to 'Draft Phase' in LocalDraft and BotDraft",
+      "Added 'How to Play' button to header during gameplay in LocalDraft and BotDraft modes",
+      "Made 'JJK DRAFT' title clickable in LocalDraft to navigate to /play",
+      "Expanded HelpPage content with comprehensive game overview, stat explanations, and winning strategies",
+      "Added detailed sections on Domain Clashes, Black Flash, Binding Vows, and Synergies",
+      "Added step-by-step game flow explanation and beginner tips"
+    ]
+  },
+  {
+    version: "v1.3.1",
+    date: "May 25, 2026",
+    title: "Draft System & Mobile Optimization",
+    description: "Enhanced save/load draft functionality and improved mobile responsiveness across the application.",
+    items: [
+      "Fixed save draft to properly save all players' stats and selections (not just player 1)",
+      "Added load full game state support to restore complete multi-player drafts",
+      "Moved How to Play button from floating overlay to home page footer for better accessibility",
+      "Made 'JJK STAT CLASH' title clickable to navigate directly to game",
+      "Removed 'Active Turn' indicator from local and bot modes (online only)",
+      "Improved mobile responsiveness for Start Playing button and feature cards on home page",
+      "Optimized PlayerCard and Comparison components for better mobile display"
+    ]
+  },
+  {
+    version: "v1.3.0",
+    date: "May 24, 2026",
+    title: "Competitive Expansion & User Experience",
+    description: "Introduction of global competitive features, social sharing, and comprehensive UX improvements.",
+    items: [
+      "Added global leaderboard system with win tracking for multiplayer matches",
+      "Implemented social share functionality to broadcast match victories",
+      "Added interactive tutorial overlay for new player onboarding",
+      "Introduced Play Again button for quick match restarts",
+      "Fixed feedback button placement to show only on game pages",
+      "Fixed auto-pick validation with updated entity ID database",
+      "Improved SEO with comprehensive meta tags, JSON-LD, and sitemap generation",
+      "Added leaderboard link to home page footer"
+    ]
+  },
+  {
     version: "v1.2.4",
     date: "May 2, 2026",
     title: "Protocol Stabilization",
@@ -101,6 +185,11 @@ export const ChangelogModal: React.FC<ChangelogProps> = ({ isOpen, onClose }) =>
                   key={idx}
                   className="bg-zinc-900/30 border border-zinc-800 p-6 rounded-md flex flex-col gap-5 hover:border-zinc-700 transition-colors relative group"
                 >
+                  {idx === 0 && (
+                    <div className="absolute -top-3 -right-3 bg-red-600 text-white text-[9px] font-black font-mono uppercase tracking-widest px-3 py-1 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)] animate-pulse">
+                      NEW
+                    </div>
+                  )}
                   <div className="flex justify-between items-start gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 mb-2">

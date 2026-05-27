@@ -134,42 +134,46 @@ export const getBotPick = (
     return bestPick ? { stat: bestPick.stat, id: bestPick.id } : null;
   }
 
-  // HARD: Elite Synergy, Pool Analysis & Binding Vow Logic
+  // HARD: Elite Synergy, Aggressive Hate-Drafting & Zero-Randomness Scarcity
   if (difficulty === 'hard') {
     const synergyTargets = getSynergyTargets(botDraft, takenIds, roundsRemaining);
     const currentIds = Object.values(botDraft).filter(Boolean) as string[];
 
-    // 1. High-Value Synergy completion/initiation
+    // 1. Aggressive Synergy completion/initiation (no threshold, pursue all)
     if (synergyTargets.length > 0) {
-      for (const target of synergyTargets.slice(0, 3)) {
+      for (const target of synergyTargets) {
         for (const stat of emptyStats) {
           const options = availablePerStat[stat];
           const match = options.find(opt => opt.id === target.id);
-          if (match && target.weight > 100) return { stat, id: match.id };
+          if (match && target.weight > 50) return { stat, id: match.id };
         }
       }
     }
 
-    // 2. Binding Vow Optimization
+    // 2. Binding Vow Optimization (always pick best, not random)
     if (emptyStats.includes('bindingVow') && (currentIds.includes('binding-vow') || currentIds.includes('special-binding-vow'))) {
        const options = availablePerStat['bindingVow'] || [];
        if (options.length > 0) {
-         const pick = options[Math.floor(Math.random() * options.length)];
-         return { stat: 'bindingVow', id: pick.id };
+         const vowGrades = ['Mythic', 'Legendary', 'Epic', 'Rare'];
+         for (const grade of vowGrades) {
+           const match = options.find(o => o.grade === grade);
+           if (match) return { stat: 'bindingVow', id: match.id };
+         }
+         return { stat: 'bindingVow', id: options[0].id };
        }
     }
 
-    // 3. Hate Drafting (Blocking Player's high-value synergies)
+    // 3. Aggressive Hate Drafting (Block Player's key synergies early)
     const opponentTargets: { id: string; weight: number }[] = [];
     playerDrafts.forEach(draft => {
       const oppIds = Object.values(draft).filter(Boolean) as string[];
       pairings.forEach(pairing => {
         const weight = getSynergyWeight(pairing);
         const matchCount = pairing.entities.filter(e => oppIds.includes(e)).length;
-        if (matchCount >= pairing.entities.length - 2 || (pairing.isSecret && matchCount >= 1)) {
+        if (matchCount >= pairing.entities.length - 2 || (pairing.isSecret && matchCount >= 1) || matchCount >= 1) {
           pairing.entities.forEach(e => {
             if (!oppIds.includes(e) && !takenIds.has(e)) {
-              opponentTargets.push({ id: e, weight: weight * 3.5 });
+              opponentTargets.push({ id: e, weight: weight * 4 });
             }
           });
         }
@@ -177,17 +181,17 @@ export const getBotPick = (
     });
 
     if (opponentTargets.length > 0) {
-      const bestBlocks = opponentTargets.sort((a, b) => b.weight - a.weight).slice(0, 3);
+      const bestBlocks = opponentTargets.sort((a, b) => b.weight - a.weight).slice(0, 5);
       for (const block of bestBlocks) {
         for (const stat of emptyStats) {
           const options = availablePerStat[stat];
           const match = options.find(opt => opt.id === block.id);
-          if (match && block.weight > 150) return { stat, id: match.id };
+          if (match && block.weight > 80) return { stat, id: match.id };
         }
       }
     }
 
-    // 4. Pool Analysis & Scarcity Scoring
+    // 4. Scarcity Scoring (no randomness, full strategic evaluation)
     let bestStrategicPick: { stat: string; id: string; score: number } | null = null;
 
     for (const stat of emptyStats) {
@@ -198,19 +202,20 @@ export const getBotPick = (
       let score = getEntityPower(bestAvailable, stat);
       
       const highTierCount = options.filter(opt => (opt.grade === 'Calamity' || opt.grade === 'Mythic' || opt.grade === 'Legendary')).length;
-      if (highTierCount <= 1) score += 100; 
-      else if (highTierCount <= 2) score += 50;
+      if (highTierCount <= 1) score += 120; 
+      else if (highTierCount <= 2) score += 60;
 
-      if (bestAvailable.grade === 'Calamity') score += 150;
-      else if (bestAvailable.grade === 'Mythic') score += 75;
+      if (bestAvailable.grade === 'Calamity') score += 200;
+      else if (bestAvailable.grade === 'Mythic') score += 100;
 
       pairings.forEach(p => {
         if (p.isSecret && p.entities.includes(bestAvailable.id)) {
-          score += 60; 
+          score += 100; 
+        }
+        if (p.entities.includes(bestAvailable.id) && !p.isSecret) {
+          score += 30;
         }
       });
-
-      score += Math.random() * 15;
 
       if (!bestStrategicPick || score > bestStrategicPick.score) {
         bestStrategicPick = { stat, id: bestAvailable.id, score };

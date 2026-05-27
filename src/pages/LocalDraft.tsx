@@ -1,15 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { characters, statsList, statLabels, categoryLabels, statCategoryMap, Entity } from '../data/characters';
 import { PlayerCard, DraftSelection, SearchableSelect, bindingVows } from '../components/PlayerCard';
+import { DraftTimer } from '../components/DraftTimer';
+import { AchievementsModal } from '../components/Achievements';
+import { StatsModal } from '../components/StatsModal';
+import { GameSettings, defaultSettings } from '../utils/gameSettings';
 import { Comparison } from '../components/Comparison';
 import { CursedConvergenceTransition } from '../components/CursedConvergenceTransition';
 import { PhaseTransition } from '../components/PhaseTransition';
 import { HelpPage } from '../components/HelpPage';
+import { FeedbackSystem } from '../components/FeedbackSystem';
+import { TutorialOverlay } from '../components/TutorialOverlay';
+import { GameNavbar } from '../components/GameNavbar';
+import { HowToPlayTutorial } from '../components/HowToPlayTutorial';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Swords, Plus, CheckCircle2, Ban, HelpCircle, Trophy, Cpu, Users, Zap, Dices, Sparkles, Target, Trash2, Clock } from 'lucide-react';
+import { Swords, Plus, CheckCircle2, Ban, HelpCircle, Trophy, Cpu, Users, Zap, Dices, Sparkles, Target, Trash2, Clock, X } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import { SystemProtocol } from '../components/SystemProtocol';
+import { saveDraft, saveFullGameState, loadFullGameState, getSavedDrafts, deleteDraft, SavedDraft } from '../utils/draftStorage';
 
 const emptyDraft = (): DraftSelection => {
   const draft: Partial<DraftSelection> = {};
@@ -35,6 +44,15 @@ export default function LocalDraft() {
   const [roundWins, setRoundWins] = useState<number[]>([0, 0]);
   const [matchHistory, setMatchHistory] = useState<any[]>([]);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isSavedDraftsOpen, setIsSavedDraftsOpen] = useState(false);
+  const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [gameSettings, setGameSettings] = useState<GameSettings>(defaultSettings);
 
   // Gamble configurations
   const [gambleConfig, setGambleConfig] = useState({ totalRolls: 50, luckyRolls: 10, rollsPerStat: 5 });
@@ -372,7 +390,7 @@ export default function LocalDraft() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-red-500/30 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-red-500/30 relative overflow-x-hidden pb-20">
       {/* Atmospheric Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.08)_0%,transparent_50%)]"></div>
@@ -383,15 +401,22 @@ export default function LocalDraft() {
       {draftPhase !== 'start' && (
         <header className="w-full py-3 md:py-4 border-b border-zinc-900/80 bg-[#050505]/80 backdrop-blur-xl sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
-            <div className="flex flex-col items-center md:items-start">
-              <h1 className="text-2xl md:text-3xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400 uppercase tracking-wide drop-shadow-[0_0_15px_rgba(220,38,38,0.3)] pr-1">
+            <div className="flex flex-col items-center md:items-start cursor-pointer" onClick={() => navigate('/play')}>
+              <h1 className="text-2xl md:text-3xl font-display font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-400 uppercase tracking-wide drop-shadow-[0_0_15px_rgba(220,38,38,0.3)] pr-1 hover:from-red-500 hover:to-red-300 transition-all">
                 JJK DRAFT
               </h1>
-              <p className="text-zinc-500 font-mono text-[10px] md:text-xs tracking-widest uppercase">Build Your Ultimate Sorcerer</p>
+              <p className="text-zinc-500 font-mono text-[10px] md:text-xs tracking-widest uppercase hover:text-zinc-400 transition-colors">Build Your Ultimate Sorcerer</p>
             </div>
 
             {!draftPhase.includes('comparing') && draftPhase === 'drafting' && (
               <div className="flex gap-2">
+                <button
+                  onClick={handleSaveDraft}
+                  className="flex items-center gap-2 px-4 py-3 rounded-full font-mono text-xs uppercase tracking-widest bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600 transition-all"
+                >
+                  <Clock size={16} />
+                  Save Draft
+                </button>
                 <button
                   onClick={() => allSelected && setActiveOverlay('clash')}
                   disabled={!allSelected}
@@ -504,6 +529,77 @@ export default function LocalDraft() {
                       >
                         Cursed Lottery
                       </button>
+                      <button
+                        onClick={() => setIsSavedDraftsOpen(true)}
+                        className="px-6 py-3 bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-white font-mono text-xs uppercase tracking-[0.2em] transition-all rounded-lg"
+                      >
+                        Load Saved Draft
+                      </button>
+                    </div>
+                  </motion.div>
+
+                  {/* Game Settings Card */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 1.9, duration: 0.8 }}
+                    className="flex flex-col gap-4 bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm relative group overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-50"></div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <Zap className="text-blue-500" size={24} />
+                      <h3 className="text-xl font-black text-white uppercase tracking-widest">Custom Rules</h3>
+                    </div>
+                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-4">Tweak the game parameters</p>
+
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Bans per player</label>
+                        <div className="flex gap-2">
+                          {[1, 2, 3].map(n => (
+                            <button
+                              key={n}
+                              onClick={() => setGameSettings(prev => ({ ...prev, banCount: n }))}
+                              className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
+                                gameSettings.banCount === n
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Timer</label>
+                        <div className="flex gap-2">
+                          {[
+                            { label: 'OFF', value: 0 },
+                            { label: '60s', value: 60 },
+                            { label: '120s', value: 120 },
+                            { label: '180s', value: 180 },
+                          ].map(opt => (
+                            <button
+                              key={opt.value}
+                              onClick={() => setGameSettings(prev => ({
+                                ...prev,
+                                timerEnabled: opt.value > 0,
+                                timerDuration: opt.value || 120,
+                              }))}
+                              className={`px-3 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
+                                (opt.value === 0 && !gameSettings.timerEnabled) ||
+                                (opt.value > 0 && gameSettings.timerEnabled && gameSettings.timerDuration === opt.value)
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
 
@@ -724,7 +820,13 @@ export default function LocalDraft() {
                 <p className="text-zinc-400">Each player must ban 2 entities from the draft pool.</p>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-8 w-full items-start">
+              <div className={`grid gap-8 w-full items-start ${
+                players.length <= 2
+                  ? 'grid-cols-1 md:grid-cols-2 justify-items-center'
+                  : players.length <= 4
+                    ? 'grid-cols-1 md:grid-cols-2 justify-items-center'
+                    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center'
+              }`}>
                 {players.map((_, pIndex) => (
                   <div key={pIndex} className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col gap-4 w-full max-w-sm relative transition-all duration-300 hover:z-50 focus-within:z-50">
                     <div className="flex justify-between items-center mb-2">
@@ -737,30 +839,27 @@ export default function LocalDraft() {
                         </button>
                       )}
                     </div>
-                    {[0, 1].map(banIndex => {
+                    {Array.from({ length: gameSettings.banCount }).map((_, banIndex) => {
                       const otherBanIds = bans.flat().filter(id => id && id !== bans[pIndex][banIndex]);
                       const availableBans = characters.filter(c => !otherBanIds.includes(c.id));
                       const options = availableBans.map(c => ({
                         value: c.id,
-                        label: `${c.name} (${categoryLabels[c.category] || c.category})`,
+                        label: c.name,
                         loreDescription: c.loreDescription,
-                        grade: c.grade
+                        grade: c.grade,
+                        description: c.flavorText
                       }));
-
                       return (
                         <div key={banIndex} className="relative">
                           <SearchableSelect
                             value={bans[pIndex][banIndex] || ""}
+                            placeholder={`Ban ${banIndex + 1}`}
                             options={options}
-                            onChange={(val: string) => {
+                            onChange={(val) => {
                               const newBans = [...bans];
                               newBans[pIndex][banIndex] = val;
                               setBans(newBans);
                             }}
-                            placeholder="Select entity to ban..."
-                            kanji="禁"
-                            colorTheme={{ text: 'text-red-500', border: 'border-red-900/50', shadow: '', glow: 'shadow-[0_0_15px_rgba(220,38,38,0.2)]', bg: '' }}
-                            isSynergyActive={false}
                           />
                         </div>
                       );
@@ -774,7 +873,7 @@ export default function LocalDraft() {
                 )}
               </div>
 
-              {bans.every(pBans => pBans.length === 2 && pBans[0] && pBans[1]) && (
+              {bans.every(pBans => pBans.length >= gameSettings.banCount && pBans.slice(0, gameSettings.banCount).every(Boolean)) && (
                 <motion.button
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -796,7 +895,13 @@ export default function LocalDraft() {
               transition={{ duration: 0.5, type: 'spring', bounce: 0.3 }}
               className="flex flex-col items-center gap-12"
             >
-              <div className="flex flex-wrap justify-center gap-8 w-full items-start relative z-20">
+              <div className={`grid gap-8 w-full items-start relative z-20 ${
+                players.length <= 2
+                  ? 'grid-cols-1 md:grid-cols-2 justify-items-center'
+                  : players.length <= 4
+                    ? 'grid-cols-1 md:grid-cols-2 justify-items-center'
+                    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center'
+              }`}>
                 {players.map((draft, index) => (
                   <PlayerCard
                     key={index}
@@ -815,10 +920,42 @@ export default function LocalDraft() {
                     isTurn={draftMode === 'gamble' ? index === currentTurnPlayer : true}
                     activeRollingStat={index === currentTurnPlayer ? activeRollingStat : null}
                     onFinishGambleTurn={handleFinishGambleTurn}
+                    isOnlineMode={false}
                   />
                 ))}
               </div>
 
+              <div className="flex items-center gap-4">
+                <DraftTimer
+                  isActive={gameSettings.timerEnabled && draftPhase === 'drafting'}
+                  duration={gameSettings.timerDuration}
+                  onTimeUp={() => {
+                    const emptyPlayer = players.findIndex(p => statsList.some(s => p[s] === null));
+                    if (emptyPlayer !== -1) {
+                      const emptyStat = statsList.find(s => players[emptyPlayer][s] === null);
+                      if (emptyStat) {
+                        const category = statCategoryMap[emptyStat] || 'character';
+                        const available = characters.filter(
+                          e => e.category === category && !Object.values(players[emptyPlayer]).includes(e.id)
+                        );
+                        if (available.length > 0) {
+                          handleSelect(emptyPlayer, emptyStat, available[0].id);
+                        }
+                      }
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => setGameSettings(prev => ({ ...prev, timerEnabled: !prev.timerEnabled }))}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider border transition-colors ${
+                    gameSettings.timerEnabled
+                      ? 'bg-red-950/40 border-red-800/40 text-red-400'
+                      : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                  }`}
+                >
+                  Timer {gameSettings.timerEnabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
 
               <SystemProtocol
                 onClash={() => setActiveOverlay('clash')}
@@ -829,21 +966,18 @@ export default function LocalDraft() {
                 {activeOverlay === 'ban' && (
                   <PhaseTransition
                     key="toDraft"
-                    topKanji="呪術"
-                    topEnglish="SORCERY PHASE"
-                    bottomPhase="PHASE 02"
-                    bottomTitle="DRAFT SELECTION"
+                    topKanji="選別開始"
+                    topEnglish="Drafting Phase"
+                    bottomPhase="Phase 2"
+                    bottomTitle="COMMENCE DRAFTING"
                     onPhaseSwap={() => setDraftPhase('drafting')}
                     onComplete={() => setActiveOverlay(null)}
                   />
                 )}
                 {activeOverlay === 'clash' && (
-                  <PhaseTransition
+                  <CursedConvergenceTransition
                     key="toClash"
-                    topKanji="展開"
-                    topEnglish="EXPANSION PHASE"
-                    bottomPhase="FINAL PHASE"
-                    bottomTitle="DOMAIN PARADOX"
+                    players={players}
                     onPhaseSwap={() => setDraftPhase('comparing')}
                     onComplete={() => setActiveOverlay(null)}
                   />
@@ -851,10 +985,10 @@ export default function LocalDraft() {
                 {activeOverlay === 'startToBan' && (
                   <PhaseTransition
                     key="toBan"
-                    topKanji="拒否"
-                    topEnglish="REJECTION PHASE"
-                    bottomPhase="PHASE 01"
-                    bottomTitle="BAN SELECTION"
+                    topKanji="封印開始"
+                    topEnglish="Banning Phase"
+                    bottomPhase="Phase 1"
+                    bottomTitle="COMMENCE SEALING"
                     onPhaseSwap={() => setDraftPhase('banning')}
                     onComplete={() => setActiveOverlay(null)}
                   />
@@ -875,6 +1009,25 @@ export default function LocalDraft() {
               <Comparison
                 players={players}
                 roundWins={roundWins}
+                isMultiplayer={false}
+                onPlayAgain={() => {
+                  setPlayers([emptyDraft(), emptyDraft()]);
+                  setBans([[], []]);
+                  setDraftPhase('start');
+                  setRoundWins([0, 0]);
+                  setMatchHistory([]);
+                  if (draftMode === 'gamble') {
+                    const resetGambleStates: Record<number, GambleState> = {};
+                    players.forEach((_, i) => {
+                      resetGambleStates[i] = {
+                        remainingTotal: gambleConfig.totalRolls,
+                        remainingLucky: gambleConfig.luckyRolls,
+                        statRolls: {}
+                      };
+                    });
+                    setGambleStates(resetGambleStates);
+                  }
+                }}
                 onReset={(winners, finalScores) => {
                   const newWins = [...roundWins];
                   while (newWins.length < players.length) newWins.push(0);
@@ -921,53 +1074,166 @@ export default function LocalDraft() {
         </AnimatePresence>
       </main>
 
-      {/* Full Screen Interactive Overlays */}
-      {activeOverlay === 'startToBan' && (
-        <PhaseTransition
-          topKanji="封印開始"
-          topEnglish="Banning Phase"
-          bottomPhase="Phase 1"
-          bottomTitle="COMMENCE SEALING"
-          onPhaseSwap={() => setDraftPhase('banning')}
-          onComplete={() => setActiveOverlay(null)}
-        />
-      )}
-
-      {activeOverlay === 'ban' && (
-        <PhaseTransition
-          topKanji="選別開始"
-          topEnglish="Drafting Phase"
-          bottomPhase="Phase 2"
-          bottomTitle="COMMENCE DRAFTING"
-          onPhaseSwap={() => setDraftPhase('drafting')}
-          onComplete={() => setActiveOverlay(null)}
-        />
-      )}
-
-      {activeOverlay === 'clash' && (
-        <CursedConvergenceTransition
-          players={players}
-          onPhaseSwap={() => setDraftPhase('comparing')}
-          onComplete={() => setActiveOverlay(null)}
+      {/* Game Navbar */}
+      {draftPhase !== 'start' && (
+        <GameNavbar
+          onHowToPlay={() => setIsHowToPlayOpen(true)}
+          onSystemArchives={() => setIsHelpOpen(true)}
+          onFeedback={() => setIsFeedbackOpen(true)}
+          onAchievements={() => setIsAchievementsOpen(true)}
+          onStats={() => setIsStatsOpen(true)}
         />
       )}
 
       {/* Help Modal */}
       <HelpPage isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
 
-      {/* Floating Help Button - Only on start screen */}
-      {draftPhase === 'start' && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setIsHelpOpen(true)}
-          className="fixed bottom-6 right-6 z-[60] w-14 h-14 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.4)] border-2 border-white/20 transition-colors"
-        >
-          <HelpCircle size={32} />
-        </motion.button>
-      )}
+      {/* How to Play Tutorial */}
+      <HowToPlayTutorial isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
+
+      {/* Feedback System */}
+      {draftPhase === 'start' && <FeedbackSystem />}
+      <FeedbackSystem hidden={true} isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+
+      {/* Achievements Modal */}
+      <AchievementsModal isOpen={isAchievementsOpen} onClose={() => setIsAchievementsOpen(false)} />
+
+      {/* Stats Modal */}
+      <StatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
+
+      {/* Tutorial Overlay */}
+      <TutorialOverlay
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+        currentPhase={draftPhase}
+      />
+
+      {/* Save Confirmation Modal */}
+      <AnimatePresence>
+        {isSaveConfirmOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSaveConfirmOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#0a0a0a] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-zinc-800 bg-[#050505]">
+                <h2 className="text-xl font-black font-display text-white uppercase tracking-tighter">Save Draft</h2>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-zinc-400 font-mono text-sm">Save your current draft to localStorage?</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsSaveConfirmOpen(false)}
+                    className="flex-1 px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600 rounded-lg font-mono text-xs uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmSaveDraft}
+                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-mono text-xs uppercase tracking-widest hover:bg-green-500 transition-all"
+                  >
+                    Save Draft
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Saved Drafts Modal */}
+      <AnimatePresence>
+        {isSavedDraftsOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSavedDraftsOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-[#0a0a0a] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-[#050505]">
+                <h2 className="text-xl font-black font-display text-white uppercase tracking-tighter">Saved Drafts</h2>
+                <button
+                  onClick={() => setIsSavedDraftsOpen(false)}
+                  className="text-zinc-500 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {savedDrafts.length === 0 ? (
+                  <p className="text-zinc-500 font-mono text-sm text-center">No saved drafts yet</p>
+                ) : (
+                  savedDrafts.map((saved) => (
+                    <div
+                      key={saved.id}
+                      className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg flex items-center justify-between hover:border-zinc-700 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <p className="text-white font-mono text-sm font-bold">{saved.name}</p>
+                        <p className="text-zinc-500 font-mono text-xs">{new Date(saved.timestamp).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleLoadDraft(saved)}
+                          className="px-3 py-1 bg-green-600 text-white text-xs font-mono uppercase rounded hover:bg-green-500 transition-colors"
+                        >
+                          Load
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(saved.id)}
+                          className="px-3 py-1 bg-red-600 text-white text-xs font-mono uppercase rounded hover:bg-red-500 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              {deleteConfirmId && (
+                <div className="p-6 border-t border-zinc-800 bg-black/50">
+                  <p className="text-zinc-300 text-sm mb-4 font-mono uppercase tracking-widest text-center">Delete this saved draft?</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        handleDeleteDraft(deleteConfirmId);
+                        setDeleteConfirmId(null);
+                      }}
+                      className="flex-1 py-2 bg-red-600 text-white text-sm font-mono uppercase rounded hover:bg-red-500 transition-colors"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(null)}
+                      className="flex-1 py-2 bg-zinc-800 text-zinc-400 text-sm font-mono uppercase rounded hover:bg-zinc-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <Analytics />
     </div>
   );

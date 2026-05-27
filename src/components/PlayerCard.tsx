@@ -316,9 +316,10 @@ interface PlayerCardProps {
   isTurn?: boolean;
   activeRollingStat?: string | null;
   onFinishGambleTurn?: () => void;
+  isOnlineMode?: boolean;
 }
 
-export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove, canRemove, getAvailableEntities, allEntities, draftMode, gambleState, gambleConfig, onGambleRoll, lockOnSelect, isTurn, activeRollingStat, onFinishGambleTurn }: PlayerCardProps) {
+export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove, canRemove, getAvailableEntities, allEntities, draftMode, gambleState, gambleConfig, onGambleRoll, lockOnSelect, isTurn, activeRollingStat, onFinishGambleTurn, isOnlineMode = false }: PlayerCardProps) {
   const colorTheme = playerColors[playerNum] || playerColors[1];
   const [rollingStats, setRollingStats] = useState<Record<string, boolean>>({});
   
@@ -352,7 +353,7 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
   const requireRollsSafeguard = (gambleState?.remainingTotal || 0) <= emptyRequiredStatsCount;
 
   return (
-    <div className={`bg-[#0a0a0a]/90 backdrop-blur-md border ${colorTheme.border} rounded-xl p-5 flex flex-col gap-4 relative w-full max-w-sm shadow-2xl transition-all duration-500 hover:z-50 focus-within:z-50`}>
+    <div className={`bg-[#0a0a0a]/90 backdrop-blur-md border ${colorTheme.border} rounded-xl p-4 md:p-5 flex flex-col gap-4 relative w-full max-w-full md:max-w-sm shadow-2xl transition-all duration-500 hover:z-50 focus-within:z-50`}>
       {/* Card Background Grid */}
       <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:16px_16px]"></div>
@@ -365,10 +366,10 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
             placeholder={`Player ${playerNum}`}
             value={draft.playerName || ''}
             onChange={(e) => onNameChange(e.target.value)}
-            className={`bg-transparent border-b-2 border-transparent hover:border-zinc-800 focus:border-red-500 outline-none text-3xl font-black ${colorTheme.text} font-display uppercase tracking-wider w-full placeholder:text-zinc-800 transition-colors truncate pb-1`}
+            className={`bg-transparent border-b-2 border-transparent hover:border-zinc-800 focus:border-red-500 outline-none text-2xl md:text-3xl font-black ${colorTheme.text} font-display uppercase tracking-wider w-full placeholder:text-zinc-800 transition-colors truncate pb-1`}
           />
-          {isTurn && (
-            <motion.div 
+          {isTurn && isOnlineMode && (
+            <motion.div
               initial={{ x: -10, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               className={`text-[10px] font-black uppercase tracking-[0.3em] ${colorTheme.text} mt-1 flex items-center gap-2`}

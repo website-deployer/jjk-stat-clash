@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { Swords, Users, Cpu, Trophy, FileText, Github, Twitter, MessageSquare, Dices, Zap } from 'lucide-react';
+import { Swords, Users, Cpu, Trophy, FileText, Github, Twitter, MessageSquare, Dices, Zap, HelpCircle } from 'lucide-react';
 import { ChangelogModal } from '../components/Changelog';
+import { HelpPage } from '../components/HelpPage';
 
 export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleStart = () => {
@@ -117,7 +119,8 @@ export default function Home() {
           initial={{ scale: 1.1, opacity: 0, y: 30 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-6xl md:text-[160px] font-black font-display uppercase tracking-[-0.06em] text-center leading-[0.85] mb-12 relative select-none"
+          className="text-6xl md:text-[160px] font-black font-display uppercase tracking-[-0.06em] text-center leading-[0.85] mb-12 relative cursor-pointer"
+          onClick={handleStart}
         >
           <span className="relative z-10 block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
             JJK STAT
@@ -139,60 +142,60 @@ export default function Home() {
             領域展開 • 伏魔御廚子 • 無下限呪術
           </p>
 
-          <button 
+          <button
             onClick={handleStart}
             className="group relative"
           >
             <div className="absolute -inset-4 bg-red-600/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-            <div className="px-20 py-7 bg-zinc-950/80 border border-white/10 group-hover:border-red-500/50 text-white font-black text-2xl uppercase tracking-[0.3em] relative overflow-hidden transition-all backdrop-blur-md hover:shadow-[0_0_50px_rgba(220,38,38,0.3)] flex items-center justify-center gap-6 group-active:scale-95">
+            <div className="px-12 md:px-20 py-6 md:py-7 bg-zinc-950/80 border border-white/10 group-hover:border-red-500/50 text-white font-black text-xl md:text-2xl uppercase tracking-[0.3em] relative overflow-hidden transition-all backdrop-blur-md hover:shadow-[0_0_50px_rgba(220,38,38,0.3)] flex items-center justify-center gap-4 md:gap-6 group-active:scale-95">
               <div className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-red-600/10 to-red-600/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              <Swords size={32} className="group-hover:rotate-12 transition-transform duration-500 text-red-500" />
+              <Swords size={28} className="group-hover:rotate-12 transition-transform duration-500 text-red-500" />
               <span className="relative z-10">Start Playing</span>
             </div>
           </button>
         </motion.div>
 
         {/* Feature Showcase Grid */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2, duration: 1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full mt-24"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full mt-16 md:mt-24"
         >
           {/* Online Multiplayer Card */}
-          <div className="bg-zinc-900/30 border border-purple-500/10 p-8 rounded-2xl backdrop-blur-xl hover:border-purple-500/40 transition-all group relative overflow-hidden">
+          <div className="bg-zinc-900/30 border border-purple-500/10 p-6 md:p-8 rounded-2xl backdrop-blur-xl hover:border-purple-500/40 transition-all group relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-600/10 blur-[50px] rounded-full group-hover:bg-purple-600/20 transition-all"></div>
-            <Users className="text-purple-500 mb-6 w-10 h-10 group-hover:scale-110 group-hover:rotate-6 transition-transform" />
-            <h3 className="text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Online Clash</h3>
-            <p className="text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">Global matchmaking via PartyKit. Experience zero-latency synchronization in the ultimate sorcerer showdown.</p>
-            <div className="mt-6 flex items-center gap-2 text-[8px] font-black text-purple-400 uppercase tracking-[0.2em]">Live Lobby System • Global Rank</div>
+            <Users className="text-purple-500 mb-4 md:mb-6 w-8 h-8 md:w-10 md:h-10 group-hover:scale-110 group-hover:rotate-6 transition-transform" />
+            <h3 className="text-lg md:text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Online Clash</h3>
+            <p className="text-[9px] md:text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">Global matchmaking via PartyKit. Experience zero-latency synchronization in the ultimate sorcerer showdown.</p>
+            <div className="mt-4 md:mt-6 flex items-center gap-2 text-[8px] font-black text-purple-400 uppercase tracking-[0.2em]">Live Lobby System • Global Rank</div>
           </div>
-          
+
           {/* Cursed Lottery Card */}
-          <div className="bg-zinc-900/30 border border-yellow-500/10 p-8 rounded-2xl backdrop-blur-xl hover:border-yellow-500/40 transition-all group relative overflow-hidden">
+          <div className="bg-zinc-900/30 border border-yellow-500/10 p-6 md:p-8 rounded-2xl backdrop-blur-xl hover:border-yellow-500/40 transition-all group relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-600/10 blur-[50px] rounded-full group-hover:bg-yellow-600/20 transition-all"></div>
-            <Dices className="text-yellow-500 mb-6 w-10 h-10 group-hover:scale-110 group-hover:-rotate-6 transition-transform" />
-            <h3 className="text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Cursed Lottery</h3>
-            <p className="text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">A high-stakes gamble mode. Burn your rolls to secure legendary entities or fall to the RNG of the Culling Games.</p>
-            <div className="mt-6 flex items-center gap-2 text-[8px] font-black text-yellow-400 uppercase tracking-[0.2em]">High Stakes • Random Draft</div>
+            <Dices className="text-yellow-500 mb-4 md:mb-6 w-8 h-8 md:w-10 md:h-10 group-hover:scale-110 group-hover:-rotate-6 transition-transform" />
+            <h3 className="text-lg md:text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Cursed Lottery</h3>
+            <p className="text-[9px] md:text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">A high-stakes gamble mode. Burn your rolls to secure legendary entities or fall to the RNG of the Culling Games.</p>
+            <div className="mt-4 md:mt-6 flex items-center gap-2 text-[8px] font-black text-yellow-400 uppercase tracking-[0.2em]">High Stakes • Random Draft</div>
           </div>
 
           {/* Simulated Combat Card */}
-          <div className="bg-zinc-900/30 border border-blue-500/10 p-8 rounded-2xl backdrop-blur-xl hover:border-blue-500/40 transition-all group relative overflow-hidden">
+          <div className="bg-zinc-900/30 border border-blue-500/10 p-6 md:p-8 rounded-2xl backdrop-blur-xl hover:border-blue-500/40 transition-all group relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 blur-[50px] rounded-full group-hover:bg-blue-600/20 transition-all"></div>
-            <Cpu className="text-blue-500 mb-6 w-10 h-10 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Elite AI</h3>
-            <p className="text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">Hone your skills against our Special Grade AI. Three difficulty tiers designed to test even the strongest sorcerers.</p>
-            <div className="mt-6 flex items-center gap-2 text-[8px] font-black text-blue-400 uppercase tracking-[0.2em]">3 Tiers • Adaptive Logic</div>
+            <Cpu className="text-blue-500 mb-4 md:mb-6 w-8 h-8 md:w-10 md:h-10 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg md:text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Elite AI</h3>
+            <p className="text-[9px] md:text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">Hone your skills against our Special Grade AI. Three difficulty tiers designed to test even the strongest sorcerers.</p>
+            <div className="mt-4 md:mt-6 flex items-center gap-2 text-[8px] font-black text-blue-400 uppercase tracking-[0.2em]">3 Tiers • Adaptive Logic</div>
           </div>
 
           {/* Secret Bonds Card */}
-          <div className="bg-zinc-900/30 border border-red-500/10 p-8 rounded-2xl backdrop-blur-xl hover:border-red-500/40 transition-all group relative overflow-hidden">
+          <div className="bg-zinc-900/30 border border-red-500/10 p-6 md:p-8 rounded-2xl backdrop-blur-xl hover:border-red-500/40 transition-all group relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-600/10 blur-[50px] rounded-full group-hover:bg-red-600/20 transition-all"></div>
-            <Zap className="text-red-500 mb-6 w-10 h-10 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Forbidden Ties</h3>
-            <p className="text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">Discover hidden character synergies. Complete legendary pairings like 'The Honored One' to unlock devastating power.</p>
-            <div className="mt-6 flex items-center gap-2 text-[8px] font-black text-red-400 uppercase tracking-[0.2em]">40+ Synergies • Secret Stats</div>
+            <Zap className="text-red-500 mb-4 md:mb-6 w-8 h-8 md:w-10 md:h-10 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg md:text-xl font-black font-display uppercase tracking-wider mb-3 text-white">Forbidden Ties</h3>
+            <p className="text-[9px] md:text-[10px] text-zinc-500 font-mono leading-relaxed uppercase tracking-widest">Discover hidden character synergies. Complete legendary pairings like 'The Honored One' to unlock devastating power.</p>
+            <div className="mt-4 md:mt-6 flex items-center gap-2 text-[8px] font-black text-red-400 uppercase tracking-[0.2em]">40+ Synergies • Secret Stats</div>
           </div>
         </motion.div>
 
@@ -222,14 +225,24 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-8">
-            <button 
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              className="flex items-center gap-2 text-zinc-400 hover:text-blue-500 transition-all font-mono text-[10px] uppercase tracking-widest bg-zinc-900/50 px-4 py-2 border border-zinc-800 rounded-sm"
+            >
+              <HelpCircle size={14} />
+              How to Play
+            </button>
+            <button
               onClick={() => setIsChangelogOpen(true)}
-              className="flex items-center gap-2 text-zinc-400 hover:text-red-500 transition-all font-mono text-[10px] uppercase tracking-widest bg-zinc-900/50 px-4 py-2 border border-zinc-800 rounded-sm"
+              className="flex items-center gap-2 text-zinc-400 hover:text-red-500 transition-all font-mono text-[10px] uppercase tracking-widest bg-zinc-900/50 px-4 py-2 border border-zinc-800 rounded-sm relative"
             >
               <FileText size={14} />
               Changelogs
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[7px] font-black font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-full animate-pulse">
+                NEW
+              </span>
             </button>
-            <button 
+            <button
               onClick={() => navigate('/leaderboard')}
               className="flex items-center gap-2 text-zinc-400 hover:text-yellow-500 transition-all font-mono text-[10px] uppercase tracking-widest bg-zinc-900/50 px-4 py-2 border border-zinc-800 rounded-sm"
             >
@@ -246,6 +259,7 @@ export default function Home() {
       </footer>
 
       <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
+      <HelpPage isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
 
       {/* Domain Expansion Transition Overlay - Optimized */}
       <AnimatePresence>
