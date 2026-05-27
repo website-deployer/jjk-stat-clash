@@ -32,7 +32,7 @@ export function FeedbackSystem({ hidden = false, isOpen: externalIsOpen, onClose
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
   useEffect(() => {
-    // Real-time synchronization with Firestore
+    if (!db) return;
     const q = query(collection(db, 'feedback'), orderBy('timestamp', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const globalEntries = snapshot.docs.map(doc => ({
@@ -53,6 +53,11 @@ export function FeedbackSystem({ hidden = false, isOpen: externalIsOpen, onClose
     setStatus('submitting');
     
     try {
+      if (!db) {
+        alert("Feedback system unavailable: Firebase not configured.");
+        setStatus('idle');
+        return;
+      }
       const char = characters.find(c => c.id === formData.characterId);
       const newEntry = {
         characterId: formData.characterId,

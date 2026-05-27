@@ -13,13 +13,16 @@ export interface LeaderboardEntry {
 
 const LEADERBOARD_COLLECTION = 'leaderboards';
 
-/**
- * Initialize a player's leaderboard entry
- */
+function requireDb() {
+  if (!db) throw new Error('Firebase not initialized');
+  return db;
+}
+
 export async function initializePlayer(playerId: string, playerName: string): Promise<void> {
-  const playerRef = doc(db, LEADERBOARD_COLLECTION, playerId);
+  const fdb = requireDb();
+  const playerRef = doc(fdb, LEADERBOARD_COLLECTION, playerId);
   const playerDoc = await getDoc(playerRef);
-  
+
   if (!playerDoc.exists()) {
     await setDoc(playerRef, {
       playerId,
@@ -33,25 +36,22 @@ export async function initializePlayer(playerId: string, playerName: string): Pr
   }
 }
 
-/**
- * Record a match result for a player
- */
 export async function recordMatchResult(
   playerId: string,
   playerName: string,
   won: boolean,
   synergyCombo?: string
 ): Promise<void> {
-  const playerRef = doc(db, LEADERBOARD_COLLECTION, playerId);
-  
+  const fdb = requireDb();
+  const playerRef = doc(fdb, LEADERBOARD_COLLECTION, playerId);
+
   await updateDoc(playerRef, {
     totalMatches: increment(1),
     totalWins: won ? increment(1) : increment(0),
     lastPlayed: Timestamp.now().toDate().toISOString(),
     ...(synergyCombo && { bestSynergy: synergyCombo }),
   });
-  
-  // Recalculate win rate
+
   const updatedDoc = await getDoc(playerRef);
   const data = updatedDoc.data();
   if (data) {
@@ -60,28 +60,24 @@ export async function recordMatchResult(
   }
 }
 
-/**
- * Get top players from leaderboard
- */
 export async function getTopPlayers(limitCount: number = 100): Promise<LeaderboardEntry[]> {
+  const fdb = requireDb();
   const q = query(
-    collection(db, LEADERBOARD_COLLECTION),
+    collection(fdb, LEADERBOARD_COLLECTION),
     orderBy('winRate', 'desc'),
     orderBy('totalWins', 'desc'),
     limit(limitCount)
   );
-  
+
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => doc.data() as LeaderboardEntry);
 }
 
-/**
- * Get a specific player's leaderboard entry
- */
 export async function getPlayerEntry(playerId: string): Promise<LeaderboardEntry | null> {
-  const playerRef = doc(db, LEADERBOARD_COLLECTION, playerId);
+  const fdb = requireDb();
+  const playerRef = doc(fdb, LEADERBOARD_COLLECTION, playerId);
   const playerDoc = await getDoc(playerRef);
-  
+
   if (playerDoc.exists()) {
     return playerDoc.data() as LeaderboardEntry;
   }
