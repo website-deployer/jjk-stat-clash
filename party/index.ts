@@ -23,6 +23,7 @@ export default class DraftServer implements PartyServer {
   };
 
   timerInterval: ReturnType<typeof setInterval> | null = null;
+  autoTransitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
   onRequest(req: any): any {
     return new Response("JJK Stat Clash Party Server is online.", { status: 200 });
@@ -167,8 +168,8 @@ export default class DraftServer implements PartyServer {
     }
 
     if (data.type === 'finishGambleTurn' && pIndex === this.state.activePlayer && this.state.draftPhase === 'drafting') {
-      // Stop the timer immediately so auto-pick can't fire after confirm
       if (this.timerInterval) clearInterval(this.timerInterval);
+      if (this.autoTransitionTimeout) clearTimeout(this.autoTransitionTimeout);
       this.state.currentRollingStat = null;
       this.advanceTurn();
     }
@@ -213,6 +214,7 @@ export default class DraftServer implements PartyServer {
       if (this.state.readyToClash.every((r: boolean) => r)) {
         this.state.draftPhase = 'transitioning';
         if (this.timerInterval) clearInterval(this.timerInterval);
+        if (this.autoTransitionTimeout) clearTimeout(this.autoTransitionTimeout);
       }
       this.broadcastState();
     }
@@ -250,6 +252,7 @@ export default class DraftServer implements PartyServer {
             statRolls: {}
           };
         });
+        this.state.extraTurns = {};
       }
       this.broadcastState();
     }
@@ -270,6 +273,7 @@ export default class DraftServer implements PartyServer {
           statRolls: {}
         };
       });
+      this.state.extraTurns = {};
       this.broadcastState();
     }
   }
@@ -309,12 +313,12 @@ export default class DraftServer implements PartyServer {
       this.state.draftPhase = 'draftComplete';
       this.broadcastState();
       
-      this.timerInterval = setTimeout(() => {
+      this.autoTransitionTimeout = setTimeout(() => {
         if (this.state.draftPhase === 'draftComplete') {
            this.state.draftPhase = 'transitioning';
            this.broadcastState();
         }
-      }, 15000) as unknown as ReturnType<typeof setInterval>;
+      }, 15000);
       return;
     }
 
@@ -363,7 +367,7 @@ export default class DraftServer implements PartyServer {
       domainExpansion: ["unlimited-void", "malevolent-shrine", "modulo-yuji-domain", "authentic-mutual-love", "womb-profusion", "chimera-shadow-garden", "deadly-sentencing", "self-embodiment-of-perfection", "coffin-of-the-iron-mountain", "ceremonial-sea-of-light", "horizon-of-the-captivating-skandha", "threefold-affliction", "time-cell-moon-palace", "idle-death-gamble", "graveyard-domain", "shadow-realm", "empty-barrier"],
       cursedTechnique: ["copy", "straw-doll", "mythical-beast-amber", "boogie-woogie", "ratio-technique", "jacobs-ladder", "limitless", "shrine", "ten-shadows", "cursed-spirit-manipulation", "star-rage", "blood-manipulation", "idle-transfiguration", "disaster-flames", "disaster-plants", "disaster-tides", "sky-manipulation", "ice-formation", "creation", "puppet-manipulation", "black-bird-manipulation", "projection-sorcery", "antigravity-system", "miracles", "love-rendezvous", "contract-reproduction", "comedian", "bird-strike", "soul-resonance", "seance-technique", "inverse", "auspicious-beasts"],
       shikigami: ["mahoraga", "agito", "judgeman", "nue", "divine-dogs", "rika-shikigami", "garuda", "great-serpent", "demon-dogs", "toad", "max-elephant", "rabbit-escape", "round-deer", "piercing-ox", "moon-dregs", "rainbow-dragon", "kuchisake-onna", "dhruv-giant", "gorilla-core", "triceratops-core", "smallpox-deity", "ganesha-curse", "crows"],
-      specialPower: ["six-eyes", "rct", "black-flash", "heavenly-restriction", "simple-domain", "falling-blossom-emotion", "hollow-wicker-basket", "domain-amplification", "binding-vow", "cursed-energy-trait", "the-bath", "cursed-realm", "death-painting-womb", "cursed-corpse-core", "supreme-martial-arts", "soul-perception", "maximum-output", "new-shadow-style", "curtain-mastery", "soul-info-perception"],
+      specialPower: ["six-eyes", "rct", "black-flash", "heavenly-restriction", "simple-domain", "falling-blossom-emotion", "hollow-wicker-basket", "domain-amplification", "cursed-energy-trait", "the-bath", "cursed-realm", "death-painting-womb", "cursed-corpse-core", "supreme-martial-arts", "soul-perception", "maximum-output", "new-shadow-style", "curtain-mastery", "soul-info-perception"],
       bindingVow: ["binding-vow"]
     };
 

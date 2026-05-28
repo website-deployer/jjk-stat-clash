@@ -72,14 +72,32 @@ export default function MultiplayerDraft() {
     }
   };
 
+  const hasVessel = (draft: any) =>
+    ['yuji', 'modulo-yuji', 'sukuna', 'megumi'].some(id =>
+      Object.values(draft).includes(id)
+    );
+
   const handleSelect = (playerIndex: number, stat: string, entityId: string) => {
     const myIndex = gameState.players.findIndex((p: any) => p.id === socket.id);
     if (playerIndex !== myIndex) return;
     if (gameState.activePlayer !== myIndex) return;
     
+    const draft = gameState.players[myIndex].draft;
+
     // Prevent changing selection once made
-    if (gameState.players[myIndex].draft[stat]) return;
-    if (!entityId) return; // Prevent selecting empty
+    if (draft[stat]) return;
+    if (!entityId) return;
+
+    // Sukuna's Fingers vessel check
+    if (entityId === 'sukunas-fingers' && !hasVessel({ ...draft, [stat]: entityId })) {
+      return;
+    }
+    // If selecting a non-vessel character while Sukuna's Fingers is equipped, clear it
+    if (stat !== 'tool' && entityId && Object.values(draft).includes('sukunas-fingers')) {
+      if (!hasVessel({ ...draft, [stat]: entityId })) {
+        socket.send(JSON.stringify({ type: 'selectDraft', stat: 'tool', entityId: null }));
+      }
+    }
 
     socket.send(JSON.stringify({ type: 'selectDraft', stat, entityId }));
   };

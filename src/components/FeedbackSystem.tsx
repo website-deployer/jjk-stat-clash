@@ -18,7 +18,15 @@ interface FeedbackEntry {
 export function FeedbackSystem({ hidden = false, isOpen: externalIsOpen, onClose }: { hidden?: boolean; isOpen?: boolean; onClose?: () => void }) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
-  const setIsOpen = onClose ? () => onClose() : setInternalIsOpen;
+
+  const setIsOpen = (val: boolean | ((prev: boolean) => boolean)) => {
+    const resolved = typeof val === 'function' ? val(isOpen) : val;
+    if (onClose && !resolved) {
+      onClose();
+    } else if (!onClose) {
+      setInternalIsOpen(resolved);
+    }
+  };
   const [view, setView] = useState<'form' | 'vault'>('form');
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
   

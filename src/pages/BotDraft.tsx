@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { characters, statsList, statLabels, categoryLabels, pairings, statCategoryMap, Entity } from '../data/characters';
+import { characters, statsList, statLabels, statCategoryMap, Entity } from '../data/characters';
 import { PlayerCard, DraftSelection, SearchableSelect, bindingVows } from '../components/PlayerCard';
 import { DraftTimer } from '../components/DraftTimer';
 import { AchievementsModal } from '../components/Achievements';
@@ -62,34 +62,30 @@ export default function BotDraft() {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timerDuration] = useState(120);
 
   const allSelected = players.every(draft => statsList.every(stat => draft[stat] !== null));
 
-  // Keep a ref for latest players state (avoids stale closures in timers)
-  const playersRef = useRef(players);
-  playersRef.current = players;
-
   // Timer & Auto-Turn Logic
   useEffect(() => {
     if (draftPhase !== 'drafting' || allSelected) return;
 
-    // If it's Bot's turn (Player 1)
     if (activePlayer === 1 && difficulty) {
       const delay = 1000 + Math.random() * 2000;
       const botTimer = setTimeout(() => {
-        executeBotTurn();
+        executeBotTurnRef.current();
       }, delay);
       return () => clearTimeout(botTimer);
     }
 
-    // If it's Human's turn, run countdown
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          // Auto-turn for Human — pick random and pass turn
-          setTimeout(() => executeAutoTurn(0), 0);
+          setTimeout(() => executeAutoTurnRef.current(0), 0);
           return TURN_TIME_SECONDS;
         }
         return prev - 1;
@@ -108,6 +104,26 @@ export default function BotDraft() {
     }
     setIsSaveConfirmOpen(false);
   };
+
+  const handleLoadDraft = (saved: SavedDraft) => {
+    const state = loadFullGameState(saved.id);
+    if (state) {
+      setPlayers(state.players.map(p => ({ ...p })));
+      setBans(state.bans.map(b => [...b]));
+    }
+    setIsSavedDraftsOpen(false);
+  };
+
+  const handleDeleteDraft = (id: string) => {
+    const success = deleteDraft(id);
+    if (success) {
+      setSavedDrafts(getSavedDrafts());
+    }
+    setDeleteConfirmId(null);
+  };
+
+  const executeBotTurnRef = useRef<() => void>(() => {});
+  const executeAutoTurnRef = useRef<(pIndex: number) => void>(() => {});
 
   const executeBotTurn = () => {
     if (!difficulty) return;
@@ -169,7 +185,7 @@ export default function BotDraft() {
               if (humanEntity) roll = humanEntity as any;
             }
             
-            const power = roll.statValue || (roll.stats && roll.stats[statToRoll]) || 50;
+            const power = ('statValue' in roll ? roll.statValue : roll.stats?.[statToRoll as keyof typeof roll.stats]) || 50;
             if (power > bestPower) {
               bestPower = power;
               bestEntity = roll;
@@ -224,6 +240,7 @@ export default function BotDraft() {
       executeAutoTurn(1);
     }
   };
+  executeBotTurnRef.current = executeBotTurn;
 
   const handleGambleRoll = (playerIndex: number, stat: string, isLucky: boolean) => {
     if (draftMode === 'gamble' && playerIndex !== activePlayer) return;
@@ -362,6 +379,7 @@ export default function BotDraft() {
       passTurn();
     }
   };
+  executeAutoTurnRef.current = executeAutoTurn;
 
   const passTurn = () => {
     setActivePlayer(prev => (prev === 0 ? 1 : 0));

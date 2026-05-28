@@ -56,7 +56,7 @@ Try it yourself: https://jjk-stat-clash.vercel.app
     navigator.clipboard.writeText(shareText).then(() => {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
-    });
+    }).catch(() => {});
   };
 
   const displayWins = [...roundWins];
@@ -79,16 +79,6 @@ Try it yourself: https://jjk-stat-clash.vercel.app
       const allSlotsFilled = players.every(pl => statsList.every(s => pl[s] !== null));
 
       const winners = getWinners();
-      const ctx: AchievementContext = {
-        hasWon: winners.includes(0),
-        roundWins: [],
-        totalWins: winners.length,
-        totalMatches: 1,
-        playerIndex: 0,
-        activePairings: activePairingIds,
-        blackFlashCount: totalBlackFlashes,
-        allSlotsFilled,
-      };
 
       // Save match record
       players.forEach((p, i) => {
@@ -104,11 +94,23 @@ Try it yourself: https://jjk-stat-clash.vercel.app
         });
       });
 
-      for (const a of achievements) {
-        if (!unlocked.includes(a.id) && a.check(ctx)) {
-          if (unlockAchievement(a.id)) {
-            setNewAchievement(a.name);
-            setTimeout(() => setNewAchievement(null), 4000);
+      for (let playerIdx = 0; playerIdx < players.length; playerIdx++) {
+        const ctx: AchievementContext = {
+          hasWon: winners.includes(playerIdx),
+          roundWins: [...roundWins],
+          totalWins: winners.length,
+          totalMatches: 1,
+          playerIndex: playerIdx,
+          activePairings: activePairingIds,
+          blackFlashCount: totalBlackFlashes,
+          allSlotsFilled,
+        };
+        for (const a of achievements) {
+          if (!unlocked.includes(a.id) && a.check(ctx)) {
+            if (unlockAchievement(a.id)) {
+              setNewAchievement(a.name);
+              setTimeout(() => setNewAchievement(null), 4000);
+            }
           }
         }
       }
@@ -125,7 +127,14 @@ Try it yourself: https://jjk-stat-clash.vercel.app
         const PLAYER_UUID_KEY = 'jjk-player-uuid';
         let playerUuid = localStorage.getItem(PLAYER_UUID_KEY);
         if (!playerUuid) {
-          playerUuid = crypto.randomUUID();
+          try {
+            playerUuid = crypto.randomUUID();
+          } catch {
+            playerUuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+              const r = Math.random() * 16 | 0;
+              return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+          }
           localStorage.setItem(PLAYER_UUID_KEY, playerUuid);
         }
         const playerId = `${playerName}-${playerUuid}`;

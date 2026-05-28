@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, X, Lock, Unlock } from 'lucide-react';
 import { achievements, getUnlockedAchievements } from '../utils/achievements';
 
 export function AchievementsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [unlocked] = useState(getUnlockedAchievements);
+  const [unlocked, setUnlocked] = useState(getUnlockedAchievements);
+
+  useEffect(() => {
+    if (isOpen) setUnlocked(getUnlockedAchievements());
+  }, [isOpen]);
 
   return (
     <AnimatePresence>

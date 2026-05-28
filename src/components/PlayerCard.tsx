@@ -350,7 +350,9 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
   };
 
   const emptyRequiredStatsCount = statsList.filter(s => draft[s] === null).length;
-  const requireRollsSafeguard = (gambleState?.remainingTotal || 0) <= emptyRequiredStatsCount;
+  const requireRollsSafeguard = draftMode === 'gamble' && gambleState
+    ? gambleState.remainingTotal <= emptyRequiredStatsCount
+    : false;
 
   return (
     <div className={`bg-[#0a0a0a]/90 backdrop-blur-md border ${colorTheme.border} rounded-xl p-4 md:p-5 flex flex-col gap-4 relative w-full max-w-full md:max-w-sm shadow-2xl transition-all duration-500 hover:z-50 focus-within:z-50`}>
@@ -359,7 +361,7 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:16px_16px]"></div>
       </div>
       
-      <div className="flex justify-between items-center mb-1 gap-2 relative z-10 w-full mb-4">
+      <div className="flex justify-between items-center gap-2 relative z-10 w-full mb-4">
         <div className="flex flex-col">
           <input
             type="text"

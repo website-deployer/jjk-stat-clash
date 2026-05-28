@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useTransform, useMotionValueEvent, animate } from 'motion/react';
 import { DraftSelection } from './PlayerCard';
 import { characters, statLabels } from '../data/characters';
 
@@ -93,13 +93,16 @@ export function ClashRow({ statKey, statName, players, statData, isActive, isPas
 // Sub-component for individual stat readout featuring a counting animation
 function StatColumn({ entity, total, bonus, isWinner, isBlackFlash, showResult, showFlash, isActive, flavorText, isHRZero, isLoser, maxVal, isNullified }: any) {
   const count = useMotionValue(0);
+  const [displayValue, setDisplayValue] = useState(0);
   const rounded = useTransform(count, Math.round);
+
+  useMotionValueEvent(rounded, "change", setDisplayValue);
 
   useEffect(() => {
     if (showResult && !isNullified) {
       const controls = animate(count, total, { 
         duration: 0.8, 
-        ease: [0.16, 1, 0.3, 1] // Custom snappy spring-like easing 
+        ease: [0.16, 1, 0.3, 1]
       });
       return controls.stop;
     } else {
@@ -175,7 +178,7 @@ function StatColumn({ entity, total, bonus, isWinner, isBlackFlash, showResult, 
                     ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]' 
                     : 'text-zinc-400'
             }`}>
-              {isNullified ? 'NULL' : rounded}
+              {isNullified ? 'NULL' : displayValue}
             </motion.span>
           ) : (
             <span className="font-mono text-xl md:text-2xl font-bold text-transparent">

@@ -117,7 +117,10 @@ export const SystemProtocol: React.FC<SystemProtocolProps> = ({ onClash, showCla
       {hoveredSynergy && typeof document !== 'undefined' && createPortal(
         <div 
           className="fixed z-[9999] w-72 bg-[#1a1515]/95 border border-yellow-900/50 backdrop-blur-md p-4 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] pointer-events-none transition-opacity duration-200"
-          style={{ top: tooltipPos.y, left: tooltipPos.x }}
+          style={{
+            top: Math.min(tooltipPos.y, window.innerHeight - 220),
+            left: Math.min(tooltipPos.x, window.innerWidth - 310),
+          }}
         >
           <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] mix-blend-overlay"></div>
           <h4 className="font-display font-black text-yellow-500 text-lg mb-1 relative z-10">{hoveredSynergy.name}</h4>

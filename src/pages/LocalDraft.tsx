@@ -55,6 +55,11 @@ export default function LocalDraft() {
   const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
   const [gameSettings, setGameSettings] = useState<GameSettings>(defaultSettings);
 
+  // Load saved drafts from localStorage on mount
+  React.useEffect(() => {
+    setSavedDrafts(getSavedDrafts());
+  }, []);
+
   // Gamble configurations
   const [gambleConfig, setGambleConfig] = useState({ totalRolls: 50, luckyRolls: 10, rollsPerStat: 5 });
   const [gambleStates, setGambleStates] = useState<Record<number, GambleState>>({});
@@ -388,6 +393,23 @@ export default function LocalDraft() {
       setSavedDrafts(getSavedDrafts());
     }
     setIsSaveConfirmOpen(false);
+  };
+
+  const handleLoadDraft = (saved: SavedDraft) => {
+    const state = loadFullGameState(saved.id);
+    if (state) {
+      setPlayers(state.players.map(p => ({ ...p })));
+      setBans(state.bans.map(b => [...b]));
+    }
+    setIsSavedDraftsOpen(false);
+  };
+
+  const handleDeleteDraft = (id: string) => {
+    const success = deleteDraft(id);
+    if (success) {
+      setSavedDrafts(getSavedDrafts());
+    }
+    setDeleteConfirmId(null);
   };
 
   const allSelected = players.every((draft, index) => {
@@ -1103,7 +1125,6 @@ export default function LocalDraft() {
       <HowToPlayTutorial isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
 
       {/* Feedback System */}
-      {draftPhase === 'start' && <FeedbackSystem />}
       <FeedbackSystem hidden={true} isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
       {/* Achievements Modal */}

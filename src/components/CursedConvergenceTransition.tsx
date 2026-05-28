@@ -1,16 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { DraftSelection } from './PlayerCard';
 
+function useStableRandom() {
+  const ref = useRef<number[]>([]);
+  if (ref.current.length === 0) {
+    for (let i = 0; i < 50; i++) ref.current.push(Math.random());
+  }
+  return ref.current;
+}
+
 export function CursedConvergenceTransition({ players, onPhaseSwap, onComplete }: { players?: DraftSelection[], onPhaseSwap: () => void, onComplete: () => void }) {
+  const randoms = useStableRandom();
+  let rngIndex = 0;
+  const rng = () => randoms[rngIndex++ % randoms.length];
   useEffect(() => {
-    const sequence = async () => {
-      onPhaseSwap();
-      // Cinematic duration
-      await new Promise(r => setTimeout(r, 4500));
-      onComplete();
+    const abort = new AbortController();
+    onPhaseSwap();
+    const timer = setTimeout(() => {
+      if (!abort.signal.aborted) {
+        onComplete();
+      }
+    }, 4500);
+    return () => {
+      abort.abort();
+      clearTimeout(timer);
     };
-    sequence();
   }, [onPhaseSwap, onComplete]);
 
   return (
@@ -79,13 +94,13 @@ export function CursedConvergenceTransition({ players, onPhaseSwap, onComplete }
                       x: ['-10%', '10%', '-10%'],
                       y: ['-10%', '10%', '-10%']
                     }} 
-                    transition={{ duration: 3 + Math.random() * 2, repeat: Infinity, ease: "easeInOut" }} 
+                    transition={{ duration: 3 + rng() * 2, repeat: Infinity, ease: "easeInOut" }} 
                   />
                   <motion.div 
                     className="absolute w-2 md:w-3 h-[200%] bg-white transform -skew-x-[15deg] shadow-[0_0_20px_rgba(255,255,255,0.8)]"
                     style={{ left: '50%', marginLeft: `${slant}%`, willChange: 'opacity, transform' }}
                     animate={{ y: ['0%', '-50%'], opacity: [0.1, 0.9, 0.1] }} 
-                    transition={{ duration: 0.3 + Math.random() * 0.2, repeat: Infinity, ease: "linear" }} 
+                    transition={{ duration: 0.3 + rng() * 0.2, repeat: Infinity, ease: "linear" }} 
                   />
                 </div>
 
