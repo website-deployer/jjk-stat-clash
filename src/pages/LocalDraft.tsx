@@ -52,6 +52,7 @@ export default function LocalDraft() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
   const [gameSettings, setGameSettings] = useState<GameSettings>(defaultSettings);
 
   // Gamble configurations
@@ -377,6 +378,16 @@ export default function LocalDraft() {
       });
       setGambleStates(newGambleStates);
     }
+  };
+
+  const handleSaveDraft = () => setIsSaveConfirmOpen(true);
+
+  const confirmSaveDraft = () => {
+    const success = saveFullGameState(players, bans, `Draft ${getSavedDrafts().length + 1}`);
+    if (success) {
+      setSavedDrafts(getSavedDrafts());
+    }
+    setIsSaveConfirmOpen(false);
   };
 
   const allSelected = players.every((draft, index) => {

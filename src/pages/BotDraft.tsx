@@ -61,6 +61,7 @@ export default function BotDraft() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timerDuration] = useState(120);
 
@@ -97,6 +98,16 @@ export default function BotDraft() {
 
     return () => clearInterval(timer);
   }, [draftPhase, activePlayer, allSelected, players]);
+
+  const handleSaveDraft = () => setIsSaveConfirmOpen(true);
+
+  const confirmSaveDraft = () => {
+    const success = saveFullGameState(players, bans, `Draft ${getSavedDrafts().length + 1}`);
+    if (success) {
+      setSavedDrafts(getSavedDrafts());
+    }
+    setIsSaveConfirmOpen(false);
+  };
 
   const executeBotTurn = () => {
     if (!difficulty) return;

@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Swords, Users, Cpu, Trophy, FileText, Github, Twitter, MessageSquare, Dices, Zap, HelpCircle } from 'lucide-react';
 import { ChangelogModal } from '../components/Changelog';
-import { HelpPage } from '../components/HelpPage';
+import { HowToPlayTutorial } from '../components/HowToPlayTutorial';
 
 export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleStart = () => {
@@ -226,7 +226,7 @@ export default function Home() {
           
           <div className="flex items-center gap-8">
             <button
-              onClick={() => setIsHelpOpen(true)}
+              onClick={() => setIsHowToPlayOpen(true)}
               className="flex items-center gap-2 text-zinc-400 hover:text-blue-500 transition-all font-mono text-[10px] uppercase tracking-widest bg-zinc-900/50 px-4 py-2 border border-zinc-800 rounded-sm"
             >
               <HelpCircle size={14} />
@@ -259,7 +259,7 @@ export default function Home() {
       </footer>
 
       <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
-      <HelpPage isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <HowToPlayTutorial isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
 
       {/* Domain Expansion Transition Overlay - Optimized */}
       <AnimatePresence>

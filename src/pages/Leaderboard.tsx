@@ -21,6 +21,7 @@ export default function Leaderboard() {
       setEntries(data);
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
