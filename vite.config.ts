@@ -7,14 +7,19 @@ import sitemapPlugin from './vite-sitemap-plugin';
 export default defineConfig({
   plugins: [
     react(), 
-    tailwindcss(),
+    tailwindcss({
+      scan: {
+        include: ['src/**/*.{html,js,ts,jsx,tsx}', 'index.html'],
+        exclude: ['.opencode.backup/**', 'node_modules/**', 'dist/**']
+      }
+    }),
     sitemapPlugin({
       baseUrl: 'https://jjk-stat-clash.vercel.app',
     })
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 });

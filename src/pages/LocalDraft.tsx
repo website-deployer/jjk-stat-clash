@@ -12,6 +12,8 @@ import { HelpPage } from '../components/HelpPage';
 import { FeedbackSystem } from '../components/FeedbackSystem';
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { GameNavbar } from '../components/GameNavbar';
+import { GameFooter } from '../components/GameFooter';
+import { ChangelogModal } from '../components/Changelog';
 import { HowToPlayTutorial } from '../components/HowToPlayTutorial';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,7 +27,6 @@ const emptyDraft = (): DraftSelection => {
   statsList.forEach(stat => {
     draft[stat] = null;
   });
-  draft.bindingVow = null;
   return draft as DraftSelection;
 };
 
@@ -54,6 +55,8 @@ export default function LocalDraft() {
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
   const [gameSettings, setGameSettings] = useState<GameSettings>(defaultSettings);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   // Load saved drafts from localStorage on mount
   React.useEffect(() => {
@@ -423,7 +426,7 @@ export default function LocalDraft() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-red-500/30 relative overflow-x-hidden pb-20">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-red-500/30 relative overflow-x-hidden flex flex-col">
       {/* Atmospheric Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(220,38,38,0.08)_0%,transparent_50%)]"></div>
@@ -467,7 +470,7 @@ export default function LocalDraft() {
         </header>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 py-12 flex flex-col items-center">
+      <main className={`max-w-7xl mx-auto px-4 py-12 flex flex-col items-center ${draftPhase === 'start' ? 'flex-1 w-full' : ''}`}>
         {draftPhase !== 'start' && draftPhase !== 'comparing' && matchHistory.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -498,7 +501,7 @@ export default function LocalDraft() {
           {draftPhase === 'start' && (
             <motion.div
               key="start"
-              className="min-h-[80vh] flex flex-col items-center justify-center relative"
+              className="flex flex-col items-center justify-center flex-1 w-full relative"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
@@ -531,152 +534,171 @@ export default function LocalDraft() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.5, duration: 0.6 }}
-                className="flex flex-col gap-8 mt-4 z-20 w-full max-w-4xl"
+                className="flex flex-col gap-5 mt-4 z-20 w-full max-w-4xl"
               >
-                {/* Row 1: Primary Mode Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Local Clash Section */}
-                  <motion.div
+                {/* 2×2 Mode Selection Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+                  <motion.button
                     initial={{ opacity: 0, scale: 0.9, y: 30 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 1.8, duration: 0.8 }}
-                    className="flex flex-col gap-4 bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm relative group overflow-hidden"
+                    transition={{ delay: 1.8, duration: 0.6 }}
+                    onClick={() => { setDraftMode('normal'); setActiveOverlay('startToBan'); }}
+                    className="relative group overflow-hidden px-5 py-7 bg-zinc-900/60 border-2 border-red-900/30 hover:border-red-500 rounded-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(220,38,38,0.2)] hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <div className="absolute top-0 left-0 w-1 h-full bg-red-600 opacity-50"></div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Swords className="text-red-500" size={24} />
-                      <h3 className="text-xl font-black text-white uppercase tracking-widest">Local Clash</h3>
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-red-600 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                      <Swords size={34} className="text-red-500 group-hover:text-red-400 transition-colors" />
+                      <div className="text-center">
+                        <div className="text-base md:text-lg font-black text-white uppercase tracking-wider">Standard Protocol</div>
+                        <div className="text-[10px] font-mono text-zinc-500 mt-1 uppercase tracking-widest">Classic 1v1 Draft</div>
+                      </div>
                     </div>
-                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-4">Battle on a single device</p>
+                  </motion.button>
 
-                    <div className="grid grid-cols-1 gap-3">
-                      <button
-                        onClick={() => { setDraftMode('normal'); setActiveOverlay('startToBan'); }}
-                        className="px-6 py-4 bg-zinc-900 border border-red-900/30 hover:bg-red-950 text-red-500 hover:text-white hover:border-red-500 font-bold text-sm uppercase tracking-[0.2em] relative overflow-hidden group/btn transition-all rounded-lg shadow-lg"
-                      >
-                        Standard Protocol
-                      </button>
-                      <button
-                        onClick={() => { setDraftMode('gamble'); setDraftPhase('gambleConfig'); }}
-                        className="px-6 py-4 bg-zinc-950 border border-yellow-900/30 hover:bg-yellow-950 text-yellow-500 hover:text-white hover:border-yellow-500 font-bold text-sm uppercase tracking-[0.2em] relative overflow-hidden group/btn transition-all rounded-lg shadow-lg"
-                      >
-                        Cursed Lottery
-                      </button>
-                      <button
-                        onClick={() => setIsSavedDraftsOpen(true)}
-                        className="px-6 py-3 bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-white font-mono text-xs uppercase tracking-[0.2em] transition-all rounded-lg"
-                      >
-                        Load Saved Draft
-                      </button>
-                    </div>
-                  </motion.div>
-
-                  {/* Game Settings Card */}
-                  <motion.div
+                  <motion.button
                     initial={{ opacity: 0, scale: 0.9, y: 30 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 1.9, duration: 0.8 }}
-                    className="flex flex-col gap-4 bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl backdrop-blur-sm relative group overflow-hidden"
+                    transition={{ delay: 1.9, duration: 0.6 }}
+                    onClick={() => { setDraftMode('gamble'); setDraftPhase('gambleConfig'); }}
+                    className="relative group overflow-hidden px-5 py-7 bg-zinc-900/60 border-2 border-yellow-900/30 hover:border-yellow-500 rounded-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(234,179,8,0.2)] hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-50"></div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Zap className="text-blue-500" size={24} />
-                      <h3 className="text-xl font-black text-white uppercase tracking-widest">Custom Rules</h3>
-                    </div>
-                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-4">Tweak the game parameters</p>
-
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Bans per player</label>
-                        <div className="flex gap-2">
-                          {[1, 2, 3].map(n => (
-                            <button
-                              key={n}
-                              onClick={() => setGameSettings(prev => ({ ...prev, banCount: n }))}
-                              className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
-                                gameSettings.banCount === n
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                              }`}
-                            >
-                              {n}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Timer</label>
-                        <div className="flex gap-2">
-                          {[
-                            { label: 'OFF', value: 0 },
-                            { label: '60s', value: 60 },
-                            { label: '120s', value: 120 },
-                            { label: '180s', value: 180 },
-                          ].map(opt => (
-                            <button
-                              key={opt.value}
-                              onClick={() => setGameSettings(prev => ({
-                                ...prev,
-                                timerEnabled: opt.value > 0,
-                                timerDuration: opt.value || 120,
-                              }))}
-                              className={`px-3 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
-                                (opt.value === 0 && !gameSettings.timerEnabled) ||
-                                (opt.value > 0 && gameSettings.timerEnabled && gameSettings.timerDuration === opt.value)
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-yellow-600 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                      <Dices size={34} className="text-yellow-500 group-hover:text-yellow-400 transition-colors" />
+                      <div className="text-center">
+                        <div className="text-base md:text-lg font-black text-white uppercase tracking-wider">Cursed Lottery</div>
+                        <div className="text-[10px] font-mono text-zinc-500 mt-1 uppercase tracking-widest">Randomized Stat Roll</div>
                       </div>
                     </div>
-                  </motion.div>
+                  </motion.button>
 
-                  {/* Online & Bot Section */}
-                  <div className="flex flex-col gap-6">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ delay: 2.0, duration: 0.8 }}
-                      className="flex-1"
-                    >
-                      <button
-                        onClick={() => navigate('/play/bot')}
-                        className="w-full h-full px-6 py-8 bg-zinc-900 border-2 border-blue-900/50 hover:bg-blue-950 text-blue-500 hover:text-white hover:border-blue-500 font-black text-xl uppercase tracking-[0.2em] relative overflow-hidden group transition-all rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-4"
-                      >
-                        <div className="absolute inset-0 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left opacity-10 duration-300"></div>
-                        <Cpu size={32} />
-                        <div className="text-center">
-                          <div className="text-xl">Vs Bot</div>
-                          <div className="text-[10px] font-mono text-zinc-500 mt-1">Simulated Combat</div>
-                        </div>
-                      </button>
-                    </motion.div>
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 2.0, duration: 0.6 }}
+                    onClick={() => navigate('/play/bot')}
+                    className="relative group overflow-hidden px-5 py-7 bg-zinc-900/60 border-2 border-blue-900/30 hover:border-blue-500 rounded-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-600 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                      <Cpu size={34} className="text-blue-500 group-hover:text-blue-400 transition-colors" />
+                      <div className="text-center">
+                        <div className="text-base md:text-lg font-black text-white uppercase tracking-wider">Vs Bot</div>
+                        <div className="text-[10px] font-mono text-zinc-500 mt-1 uppercase tracking-widest">AI-Powered Combat</div>
+                      </div>
+                    </div>
+                  </motion.button>
 
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ delay: 2.2, duration: 0.8 }}
-                      className="flex-1"
-                    >
-                      <button
-                        onClick={() => navigate('/play/multiplayer')}
-                        className="w-full h-full px-6 py-8 bg-zinc-900 border-2 border-purple-900/50 hover:bg-purple-950 text-purple-500 hover:text-white hover:border-purple-500 font-black text-xl uppercase tracking-[0.2em] relative overflow-hidden group transition-all rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-4"
-                      >
-                        <div className="absolute inset-0 bg-purple-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left opacity-10 duration-300"></div>
-                        <Users size={32} />
-                        <div className="text-center">
-                          <div className="text-xl">Online</div>
-                          <div className="text-[10px] font-mono text-zinc-500 mt-1">Global Network</div>
-                        </div>
-                      </button>
-                    </motion.div>
-                  </div>
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 2.1, duration: 0.6 }}
+                    onClick={() => navigate('/play/multiplayer')}
+                    className="relative group overflow-hidden px-5 py-7 bg-zinc-900/60 border-2 border-purple-900/30 hover:border-purple-500 rounded-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-purple-600 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10 flex flex-col items-center gap-3">
+                      <Users size={34} className="text-purple-500 group-hover:text-purple-400 transition-colors" />
+                      <div className="text-center">
+                        <div className="text-base md:text-lg font-black text-white uppercase tracking-wider">Online</div>
+                        <div className="text-[10px] font-mono text-zinc-500 mt-1 uppercase tracking-widest">Global Network</div>
+                      </div>
+                    </div>
+                  </motion.button>
                 </div>
+
+                {/* Secondary Actions Row */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 2.3, duration: 0.4 }}
+                    onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                    className="flex items-center gap-2 px-5 py-3 bg-zinc-900/60 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white font-mono text-xs uppercase tracking-[0.2em] transition-all rounded-xl"
+                  >
+                    <Zap size={16} />
+                    {isSettingsOpen ? 'Hide Custom Rules' : 'Custom Rules'}
+                  </motion.button>
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 2.4, duration: 0.4 }}
+                    onClick={() => setIsSavedDraftsOpen(true)}
+                    className="flex items-center gap-2 px-5 py-3 bg-zinc-900/60 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white font-mono text-xs uppercase tracking-[0.2em] transition-all rounded-xl"
+                  >
+                    <Clock size={16} />
+                    Load Saved Draft
+                  </motion.button>
+                </div>
+
+                {/* Collapsible Custom Rules */}
+                <AnimatePresence>
+                  {isSettingsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-zinc-900/40 border border-zinc-800 p-5 rounded-2xl backdrop-blur-sm">
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Bans per player</label>
+                            <div className="flex gap-2">
+                              {[1, 2, 3].map(n => (
+                                <button
+                                  key={n}
+                                  onClick={() => setGameSettings(prev => ({ ...prev, banCount: n }))}
+                                  className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
+                                    gameSettings.banCount === n
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                  }`}
+                                >
+                                  {n}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Timer</label>
+                            <div className="flex gap-2">
+                              {[
+                                { label: 'OFF', value: 0 },
+                                { label: '60s', value: 60 },
+                                { label: '120s', value: 120 },
+                                { label: '180s', value: 180 },
+                              ].map(opt => (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setGameSettings(prev => ({
+                                    ...prev,
+                                    timerEnabled: opt.value > 0,
+                                    timerDuration: opt.value || 120,
+                                  }))}
+                                  className={`px-3 h-8 rounded-lg text-xs font-mono font-bold transition-colors ${
+                                    (opt.value === 0 && !gameSettings.timerEnabled) ||
+                                    (opt.value > 0 && gameSettings.timerEnabled && gameSettings.timerDuration === opt.value)
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
 
               {/* Decorative background element for start screen */}
@@ -994,39 +1016,6 @@ export default function LocalDraft() {
                 onClash={() => setActiveOverlay('clash')}
                 showClashButton={allSelected}
               />
-
-              <AnimatePresence>
-                {activeOverlay === 'ban' && (
-                  <PhaseTransition
-                    key="toDraft"
-                    topKanji="選別開始"
-                    topEnglish="Drafting Phase"
-                    bottomPhase="Phase 2"
-                    bottomTitle="COMMENCE DRAFTING"
-                    onPhaseSwap={() => setDraftPhase('drafting')}
-                    onComplete={() => setActiveOverlay(null)}
-                  />
-                )}
-                {activeOverlay === 'clash' && (
-                  <CursedConvergenceTransition
-                    key="toClash"
-                    players={players}
-                    onPhaseSwap={() => setDraftPhase('comparing')}
-                    onComplete={() => setActiveOverlay(null)}
-                  />
-                )}
-                {activeOverlay === 'startToBan' && (
-                  <PhaseTransition
-                    key="toBan"
-                    topKanji="封印開始"
-                    topEnglish="Banning Phase"
-                    bottomPhase="Phase 1"
-                    bottomTitle="COMMENCE SEALING"
-                    onPhaseSwap={() => setDraftPhase('banning')}
-                    onComplete={() => setActiveOverlay(null)}
-                  />
-                )}
-              </AnimatePresence>
             </motion.div>
           )}
 
@@ -1107,16 +1096,29 @@ export default function LocalDraft() {
         </AnimatePresence>
       </main>
 
+      {draftPhase === 'start' && (
+        <GameFooter
+          onChangelog={() => setIsChangelogOpen(true)}
+          onHowToPlay={() => setIsHowToPlayOpen(true)}
+          onFeedback={() => setIsFeedbackOpen(true)}
+          onArchives={() => setIsHelpOpen(true)}
+          onStats={() => setIsStatsOpen(true)}
+          onAchievements={() => setIsAchievementsOpen(true)}
+        />
+      )}
+
       {/* Game Navbar */}
       {draftPhase !== 'start' && (
         <GameNavbar
           onHowToPlay={() => setIsHowToPlayOpen(true)}
-          onSystemArchives={() => setIsHelpOpen(true)}
           onFeedback={() => setIsFeedbackOpen(true)}
           onAchievements={() => setIsAchievementsOpen(true)}
           onStats={() => setIsStatsOpen(true)}
         />
       )}
+
+      {/* Changelog Modal */}
+      <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
 
       {/* Help Modal */}
       <HelpPage isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
@@ -1132,6 +1134,40 @@ export default function LocalDraft() {
 
       {/* Stats Modal */}
       <StatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
+
+      {/* Phase Transition Overlays */}
+      <AnimatePresence>
+        {activeOverlay === 'ban' && (
+          <PhaseTransition
+            key="toDraft"
+            topKanji="選別開始"
+            topEnglish="Drafting Phase"
+            bottomPhase="Phase 2"
+            bottomTitle="COMMENCE DRAFTING"
+            onPhaseSwap={() => setDraftPhase('drafting')}
+            onComplete={() => setActiveOverlay(null)}
+          />
+        )}
+        {activeOverlay === 'clash' && (
+          <CursedConvergenceTransition
+            key="toClash"
+            players={players}
+            onPhaseSwap={() => setDraftPhase('comparing')}
+            onComplete={() => setActiveOverlay(null)}
+          />
+        )}
+        {activeOverlay === 'startToBan' && (
+          <PhaseTransition
+            key="toBan"
+            topKanji="封印開始"
+            topEnglish="Banning Phase"
+            bottomPhase="Phase 1"
+            bottomTitle="COMMENCE SEALING"
+            onPhaseSwap={() => setDraftPhase('banning')}
+            onComplete={() => setActiveOverlay(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Tutorial Overlay */}
       <TutorialOverlay

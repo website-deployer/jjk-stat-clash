@@ -300,7 +300,7 @@ export default class DraftServer implements PartyServer {
   }
 
   advanceTurn() {
-    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
+    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq', 'bindingVow'];
     
     // Clear the current timer before doing anything
     if (this.timerInterval) clearInterval(this.timerInterval);
@@ -357,7 +357,7 @@ export default class DraftServer implements PartyServer {
     const player = this.state.players[pIndex];
     if (!player) return this.advanceTurn();
 
-    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq'];
+    const statsList = ['strength', 'speed', 'durability', 'ce', 'ct', 'body', 'tool', 'specialPower1', 'specialPower2', 'shikigami', 'domainExpansion', 'iq', 'bindingVow'];
     
     // NOTE: These arrays must be kept in sync with src/data/characters.ts
     // When adding new entities, update both files to prevent auto-pick from selecting invalid entities

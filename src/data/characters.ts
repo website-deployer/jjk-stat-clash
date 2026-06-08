@@ -251,6 +251,7 @@ export const statLabels: Record<string, string> = {
   shikigami: 'Shikigami',
   domainExpansion: 'Domain Expansion',
   iq: 'Battle IQ',
+  bindingVow: 'Binding Vow',
 };
 
 export const statsList = Object.keys(statLabels);
@@ -268,6 +269,7 @@ export const statCategoryMap: Record<string, EntityCategory> = {
   shikigami: 'shikigami',
   domainExpansion: 'domainExpansion',
   iq: 'character',
+  bindingVow: 'specialPower',
 };
 
 export const categoryLabels: Record<string, string> = {

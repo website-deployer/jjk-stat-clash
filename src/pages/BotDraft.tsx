@@ -24,7 +24,6 @@ const TURN_TIME_SECONDS = 30;
 const emptyDraft = (): DraftSelection => {
   const draft: Partial<DraftSelection> = {};
   statsList.forEach(stat => { draft[stat] = null; });
-  draft.bindingVow = null;
   return draft as DraftSelection;
 };
 
@@ -1064,7 +1063,6 @@ export default function BotDraft() {
       {draftPhase !== 'setup' && draftPhase !== 'gambleConfig' && (
         <GameNavbar
           onHowToPlay={() => setIsHowToPlayOpen(true)}
-          onSystemArchives={() => setIsHelpOpen(true)}
           onFeedback={() => setIsFeedbackOpen(true)}
           onAchievements={() => setIsAchievementsOpen(true)}
           onStats={() => setIsStatsOpen(true)}
