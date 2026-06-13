@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Entity, CharacterStats, statLabels, statsList, statCategoryMap, pairings } from '../data/characters';
-import { Trash2, ChevronDown, Zap, Search, X, CheckCircle2 } from 'lucide-react';
+import { Trash2, ChevronDown, Zap, Search, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type DraftSelection = Record<string, string | null>;
@@ -394,6 +394,24 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
         )}
       </div>
 
+      {/* Draft progress bar */}
+      <div className="mb-2">
+        <div className="flex justify-between text-[10px] text-zinc-500 mb-1 font-mono">
+          <span>{statsList.filter(s => draft[s] !== null).length}/{statsList.length} filled</span>
+          {statsList.filter(s => draft[s] !== null).length < statsList.length && draftMode !== 'gamble' && (
+            <span className="text-yellow-600">
+              {statsList.length - statsList.filter(s => draft[s] !== null).length} remaining
+            </span>
+          )}
+        </div>
+        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+          <div
+            className={`h-full transition-all duration-300 rounded-full ${colorTheme.bg.replace('/20', '')}`}
+            style={{ width: `${(statsList.filter(s => draft[s] !== null).length / statsList.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2">
         {statsList.map((stat) => {
           const currentId = draft[stat];
@@ -423,6 +441,9 @@ export function PlayerCard({ playerNum, draft, onSelect, onNameChange, onRemove,
                     <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase">
                       {gambleState.statRolls[stat] || 0}/{gambleConfig.rollsPerStat} Rolls
                     </span>
+                  )}
+                  {!currentId && draftMode !== 'gamble' && (
+                    <AlertTriangle size={10} className="text-yellow-600" />
                   )}
                 </div>
               </div>

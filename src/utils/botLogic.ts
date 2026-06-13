@@ -4,7 +4,7 @@ import { DraftSelection } from '../components/PlayerCard';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 // Helper to calculate raw power of an entity
-const getEntityPower = (entity: any, statToFill: string) => {
+export const getEntityPower = (entity: any, statToFill: string) => {
   let pwr = 50; // Base
   if (entity.statValue) pwr = entity.statValue;
   else if (entity.stats && entity.stats[statToFill]) pwr = entity.stats[statToFill];
@@ -19,7 +19,7 @@ const getEntityPower = (entity: any, statToFill: string) => {
 };
 
 // Calculate total stat bonus weight for a synergy
-const getSynergyWeight = (pairing: Pairing) => {
+export const getSynergyWeight = (pairing: Pairing) => {
   let weight = Object.values(pairing.bonusStats).reduce((acc: number, val) => acc + (val || 0), 0);
   if (pairing.isSecret) weight *= 2.5; // Secret synergies are massive priorities
   return weight;

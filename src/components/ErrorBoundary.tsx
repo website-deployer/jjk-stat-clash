@@ -23,6 +23,14 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('[JJK Stat Clash] Uncaught error:', error, errorInfo);
   }
 
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  handleReload = () => {
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -40,13 +48,22 @@ export class ErrorBoundary extends Component<Props, State> {
                 {this.state.error.message}
               </pre>
             )}
-            <button
-              onClick={() => this.setState({ hasError: false, error: null })}
-              className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest rounded-full transition-all hover:scale-105 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Reset Application
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={this.handleReset}
+                className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest rounded-full transition-all hover:scale-105 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Try Again
+              </button>
+              <button
+                onClick={this.handleReload}
+                className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white font-bold uppercase tracking-widest rounded-full transition-all text-sm"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Reload App
+              </button>
+            </div>
           </div>
         </div>
       );

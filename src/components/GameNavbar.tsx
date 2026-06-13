@@ -1,16 +1,15 @@
 import React from 'react';
-import { HelpCircle, Info, MessageSquare, Home, Trophy, BarChart3 } from 'lucide-react';
+import { HelpCircle, MessageSquare, Home, Trophy, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface GameNavbarProps {
   onHowToPlay: () => void;
-  onSystemArchives: () => void;
   onFeedback: () => void;
   onAchievements?: () => void;
   onStats?: () => void;
 }
 
-export const GameNavbar: React.FC<GameNavbarProps> = ({ onHowToPlay, onSystemArchives, onFeedback, onAchievements, onStats }) => {
+export const GameNavbar: React.FC<GameNavbarProps> = ({ onHowToPlay, onFeedback, onAchievements, onStats }) => {
   const navigate = useNavigate();
 
   return (
@@ -31,13 +30,6 @@ export const GameNavbar: React.FC<GameNavbarProps> = ({ onHowToPlay, onSystemArc
           >
             <HelpCircle size={16} />
             <span className="text-xs font-mono uppercase tracking-widest">How to Play</span>
-          </button>
-          <button
-            onClick={onSystemArchives}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all"
-          >
-            <Info size={16} />
-            <span className="text-xs font-mono uppercase tracking-widest">Archives</span>
           </button>
           <button
             onClick={onFeedback}

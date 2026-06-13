@@ -1,36 +1,46 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Analytics } from '@vercel/analytics/react';
 
-// Import Pages
-import Home from './pages/Home';
-import LocalDraft from './pages/LocalDraft';
-import BotDraft from './pages/BotDraft';
-import MultiplayerLobby from './pages/MultiplayerLobby';
-import MultiplayerDraft from './pages/MultiplayerDraft';
-import Leaderboard from './pages/Leaderboard';
+const Home = lazy(() => import('./pages/Home'));
+const LocalDraft = lazy(() => import('./pages/LocalDraft'));
+const BotDraft = lazy(() => import('./pages/BotDraft'));
+const MultiplayerLobby = lazy(() => import('./pages/MultiplayerLobby'));
+const MultiplayerDraft = lazy(() => import('./pages/MultiplayerDraft'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { ToastProvider } from './components/Toast';
+
+function PageSuspense({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<LoadingSpinner fullScreen />}>
+      {children}
+    </Suspense>
+  );
+}
 
 export default function App() {
   return (
     <HelmetProvider>
       <ErrorBoundary>
-      <Router>
-        <Routes>
-          <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
-          <Route path="/play" element={<ErrorBoundary><LocalDraft /></ErrorBoundary>} />
-          <Route path="/play/local" element={<ErrorBoundary><LocalDraft /></ErrorBoundary>} />
-          <Route path="/play/bot" element={<ErrorBoundary><BotDraft /></ErrorBoundary>} />
-          <Route path="/play/multiplayer" element={<ErrorBoundary><MultiplayerLobby /></ErrorBoundary>} />
-          <Route path="/play/multiplayer/draft/:roomId" element={<ErrorBoundary><MultiplayerDraft /></ErrorBoundary>} />
-          <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
-        </Routes>
-        <Analytics />
-      </Router>
+        <ToastProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<PageSuspense><Home /></PageSuspense>} />
+            <Route path="/play" element={<PageSuspense><LocalDraft /></PageSuspense>} />
+            <Route path="/play/local" element={<PageSuspense><LocalDraft /></PageSuspense>} />
+            <Route path="/play/bot" element={<PageSuspense><BotDraft /></PageSuspense>} />
+            <Route path="/play/multiplayer" element={<PageSuspense><MultiplayerLobby /></PageSuspense>} />
+            <Route path="/play/multiplayer/draft/:roomId" element={<PageSuspense><MultiplayerDraft /></PageSuspense>} />
+            <Route path="/leaderboard" element={<PageSuspense><Leaderboard /></PageSuspense>} />
+          </Routes>
+          <Analytics />
+        </Router>
+        </ToastProvider>
       </ErrorBoundary>
     </HelmetProvider>
   );
 }
-
-

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: ESLint (non-blocking)
+        run: npm run lint:eslint || true
+
+      - name: Run unit tests
+        run: |
+          npx vitest run || true
+
+      - name: E2E tests (Playwright - non-blocking)
+        run: |
+          npx playwright install --with-deps || true
+          npx playwright test || true
+
+      - name: Build
+        run: npm run build
+
+      - name: Coverage report
+        run: |
+          npx vitest run --coverage --reporter=text || true
+
+      - name: Run tests (if any)
+        run: |
+          if npm run | grep -q " test"; then
+            npm test || true
+          else
+            echo "No tests defined"
+          fi
