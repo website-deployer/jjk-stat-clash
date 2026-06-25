@@ -16,7 +16,7 @@ export const GameNavbar: React.FC<GameNavbarProps> = ({ onHowToPlay, onFeedback,
     <nav className="fixed bottom-0 left-0 right-0 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800 z-[100]">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <button
-          onClick={() => navigate('/play')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
         >
           <Home size={18} />
