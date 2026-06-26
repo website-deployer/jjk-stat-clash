@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,15 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
+  const clashVideoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isTransitioning && clashVideoRef.current) {
+      clashVideoRef.current.currentTime = 0;
+      clashVideoRef.current.play().catch(() => {});
+    }
+  }, [isTransitioning]);
 
   const handleStart = () => {
     setIsTransitioning(true);
@@ -308,13 +316,13 @@ export default function Home() {
               
               {/* Clash Animation Layer (compressed video) */}
               <motion.div
-                initial={{ opacity: 0, scale: 1.2 }}
-                animate={{ opacity: [0, 0.6, 0], scale: [1.2, 1.25, 1.3] }}
-                transition={{ duration: 1.8, delay: 0.15 }}
+                initial={{ opacity: 0, scale: 1.3 }}
+                animate={{ opacity: [0, 1, 1, 0.8, 0], scale: [1.3, 1, 1, 1.05, 1.1] }}
+                transition={{ duration: 2.5, times: [0, 0.08, 0.6, 0.85, 1], ease: "easeOut" }}
                 className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
               >
                 <video
-                  autoPlay
+                  ref={clashVideoRef}
                   muted
                   playsInline
                   preload="auto"
