@@ -34,7 +34,7 @@ export default function Home() {
         <meta property="og:url" content="https://jjk-stat-clash.vercel.app" />
         <meta property="og:title" content="JJK Stat Clash | Build Your Ultimate Sorcerer" />
         <meta property="og:description" content="Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends, and see who reigns supreme in the Culling Games." />
-        <meta property="og:image" content="https://jjk-stat-clash.vercel.app/clash.gif" />
+        <meta property="og:image" content="https://jjk-stat-clash.vercel.app/og-image.jpg" />
         <meta property="og:site_name" content="JJK Stat Clash" />
         
         {/* Twitter Card */}
@@ -42,7 +42,7 @@ export default function Home() {
         <meta name="twitter:url" content="https://jjk-stat-clash.vercel.app" />
         <meta name="twitter:title" content="JJK Stat Clash | Build Your Ultimate Sorcerer" />
         <meta name="twitter:description" content="Draft your ultimate Jujutsu Kaisen sorcerer. Create legendary synergies, battle against bots or friends." />
-        <meta name="twitter:image" content="https://jjk-stat-clash.vercel.app/clash.gif" />
+        <meta name="twitter:image" content="https://jjk-stat-clash.vercel.app/og-image.jpg" />
         
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json">
@@ -72,16 +72,18 @@ export default function Home() {
         </script>
       </Helmet>
 
-      {/* Optimized Video Background */}
+      {/* Animated Background (compressed video) */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <video 
           autoPlay 
           muted 
           loop 
           playsInline
+          preload="none"
+          poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='960' height='436'%3E%3Crect fill='%23050505' width='100%25' height='100%25'/%3E%3C/svg%3E"
           className="absolute min-w-full min-h-full object-cover opacity-50 grayscale-[0.3] contrast-[1.1]"
         >
-          <source src="/hero.mp4#t=25" type="video/mp4" />
+          <source src="/hero-compressed.mp4" type="video/mp4" />
         </video>
         
         {/* Refined Overlays */}
@@ -304,19 +306,22 @@ export default function Home() {
                 className="absolute w-full h-[4px] bg-white z-30 shadow-[0_0_50px_#fff]"
               />
               
-              {/* Optimized GIF Layer */}
+              {/* Clash Animation Layer (compressed video) */}
               <motion.div
                 initial={{ opacity: 0, scale: 1.2 }}
-                animate={{ opacity: [0, 1, 0], scale: [1.2, 1.25, 1.3] }}
-                transition={{ duration: 1.5, delay: 0.2 }}
+                animate={{ opacity: [0, 0.6, 0], scale: [1.2, 1.25, 1.3] }}
+                transition={{ duration: 1.8, delay: 0.15 }}
                 className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
               >
-                <img 
-                  src="/clash.gif" 
-                  className="w-[110%] h-[110%] object-cover mix-blend-screen opacity-60 filter contrast-150 brightness-125" 
-                  alt="clash" 
-                  style={{ willChange: 'transform, opacity' }}
-                />
+                <video
+                  autoPlay
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="w-[110%] h-[110%] object-cover mix-blend-screen opacity-100"
+                >
+                  <source src="/clash-compressed.mp4" type="video/mp4" />
+                </video>
               </motion.div>
 
               {/* Domain Expansion Text */}
