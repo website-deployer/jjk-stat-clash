@@ -15,8 +15,12 @@ export default function Home() {
 
   useEffect(() => {
     if (isTransitioning && clashVideoRef.current) {
-      clashVideoRef.current.currentTime = 0;
-      clashVideoRef.current.play().catch(() => {});
+      const video = clashVideoRef.current;
+      video.currentTime = 0;
+      video.play().catch(() => {
+        // Retry once after a small delay
+        setTimeout(() => video.play().catch(() => {}), 100);
+      });
     }
   }, [isTransitioning]);
 
@@ -271,7 +275,7 @@ export default function Home() {
       <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
       <HowToPlayTutorial isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
 
-      {/* Domain Expansion Transition Overlay - Optimized */}
+      {/* Domain Expansion Transition Overlay */}
       <AnimatePresence>
         {isTransitioning && (
           <motion.div
@@ -280,67 +284,117 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden"
           >
+            {/* Base black layer - video sits on top */}
+            <div className="absolute inset-0 z-0 bg-black" />
+
+            {/* Clash Animation Layer (visible immediately) */}
+            <div className="absolute inset-0 z-[5] flex items-center justify-center overflow-hidden">
+              <video
+                ref={clashVideoRef}
+                muted
+                playsInline
+                preload="auto"
+                className="w-[120%] h-[120%] object-cover mix-blend-screen opacity-70"
+              >
+                <source src="/clash-compressed.mp4" type="video/mp4" />
+              </video>
+            </div>
+
             {/* Cinematic Camera Shake Layer */}
             <motion.div
               animate={{ 
-                x: [0, -10, 10, -5, 5, 0],
-                y: [0, 5, -5, 10, -10, 0]
+                x: [0, -12, 12, -8, 8, -4, 4, 0],
+                y: [0, 8, -8, 12, -12, 6, -6, 0]
               }}
-              transition={{ duration: 0.2, repeat: 10 }}
-              className="absolute inset-0 flex items-center justify-center"
+              transition={{ duration: 0.3, repeat: 8, ease: "easeInOut" }}
+              className="absolute inset-0 z-10 flex items-center justify-center"
             >
-              {/* Shatter Effect (CSS Shapes) */}
-              {[...Array(6)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ scale: 0, opacity: 0, rotate: i * 60 }}
-                  animate={{ 
-                    scale: [0, 2, 4], 
-                    opacity: [0, 0.8, 0],
-                    x: [0, (i % 2 === 0 ? 500 : -500)],
-                    y: [0, (i < 3 ? 500 : -500)]
-                  }}
-                  transition={{ duration: 0.8, delay: 0.1 * i, ease: "easeOut" }}
-                  className="absolute w-64 h-64 border border-white/20 bg-white/5 backdrop-blur-sm transform"
-                  style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }}
-                />
-              ))}
+              {/* Shatter Effect - Large Glass Panels */}
+              {[...Array(12)].map((_, i) => {
+                const angle = (i * 30) + Math.random() * 10;
+                const distance = 300 + Math.random() * 600;
+                const size = 80 + Math.random() * 120;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0, opacity: 0, rotate: angle, x: 0, y: 0 }}
+                    animate={{ 
+                      scale: [0, 1.5, 3.5], 
+                      opacity: [0, 1, 0.8, 0],
+                      x: [0, Math.cos(angle * Math.PI / 180) * distance],
+                      y: [0, Math.sin(angle * Math.PI / 180) * distance],
+                      rotate: [angle, angle + 180 + Math.random() * 180]
+                    }}
+                    transition={{ duration: 0.6 + Math.random() * 0.4, delay: 0.05 * i, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="absolute w-[var(--size)] h-[var(--size)] border border-white/30"
+                    style={{
+                      width: size,
+                      height: size,
+                      clipPath: `polygon(${50 + (Math.random() * 20 - 10)}% 0%, ${100 - Math.random() * 20}% ${30 + Math.random() * 20}%, ${80 + Math.random() * 20}% ${80 + Math.random() * 20}%, ${20 + Math.random() * 20}% ${100 - Math.random() * 20}%, ${0 + Math.random() * 20}% ${40 + Math.random() * 20}%)`,
+                      background: `radial-gradient(circle at ${50 + Math.random() * 40 - 20}% ${50 + Math.random() * 40 - 20}%, rgba(255,255,255,0.15), rgba(255,255,255,0.02))`,
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: '0 0 20px rgba(255,255,255,0.1), inset 0 0 20px rgba(255,255,255,0.05)'
+                    }}
+                  />
+                );
+              })}
 
-              {/* Optimized Slash Layer */}
+              {/* Small debris particles */}
+              {[...Array(30)].map((_, i) => {
+                const angle = Math.random() * 360;
+                const dist = 100 + Math.random() * 400;
+                return (
+                  <motion.div
+                    key={`debris-${i}`}
+                    initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
+                    animate={{
+                      scale: [0, 1, 0],
+                      opacity: [0, 1, 0],
+                      x: Math.cos(angle * Math.PI / 180) * dist,
+                      y: Math.sin(angle * Math.PI / 180) * dist,
+                    }}
+                    transition={{ duration: 0.5 + Math.random() * 0.5, delay: Math.random() * 0.3, ease: "easeOut" }}
+                    className="absolute w-[3px] h-[3px] bg-white/60 rounded-full"
+                  />
+                );
+              })}
+
+              {/* Central Flash Burst */}
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 3, 5], opacity: [0, 1, 0] }}
+                transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+                className="absolute w-32 h-32 bg-white/20 rounded-full z-20"
+                style={{ boxShadow: '0 0 100px rgba(255,255,255,0.3), 0 0 200px rgba(255,255,255,0.1)' }}
+              />
+
+              {/* Slash Layer */}
               <motion.div 
                 initial={{ scaleX: 0 }}
-                animate={{ scaleX: [0, 2, 0], opacity: [0, 1, 0] }}
+                animate={{ scaleX: [0, 2.5, 0], opacity: [0, 1, 0] }}
                 transition={{ duration: 0.4, ease: "circInOut" }}
-                className="absolute w-full h-[4px] bg-white z-30 shadow-[0_0_50px_#fff]"
+                className="absolute w-full h-[4px] bg-white z-30"
+                style={{ boxShadow: '0 0 80px rgba(255,255,255,0.8), 0 0 150px rgba(255,255,255,0.4)' }}
               />
-              
-              {/* Clash Animation Layer (compressed video) */}
-              <motion.div
-                initial={{ opacity: 0, scale: 1.3 }}
-                animate={{ opacity: [0, 1, 1, 0.8, 0], scale: [1.3, 1, 1, 1.05, 1.1] }}
-                transition={{ duration: 2.5, times: [0, 0.08, 0.6, 0.85, 1], ease: "easeOut" }}
-                className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
-              >
-                <video
-                  ref={clashVideoRef}
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="w-[110%] h-[110%] object-cover mix-blend-screen opacity-100"
-                >
-                  <source src="/clash-compressed.mp4" type="video/mp4" />
-                </video>
-              </motion.div>
+
+              {/* Second Slash - diagonal */}
+              <motion.div 
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: [0, 2, 0], opacity: [0, 0.7, 0] }}
+                transition={{ duration: 0.35, delay: 0.15, ease: "circInOut" }}
+                className="absolute w-full h-[3px] bg-white/70 z-30"
+                style={{ transform: 'rotate(25deg)', boxShadow: '0 0 60px rgba(255,255,255,0.5)' }}
+              />
 
               {/* Domain Expansion Text */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
-                animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1, 1.1, 2], filter: ['blur(10px)', 'blur(0px)', 'blur(0px)', 'blur(20px)'] }}
-                transition={{ duration: 2, delay: 0.1, times: [0, 0.2, 0.8, 1] }}
+                initial={{ opacity: 0, scale: 0.3, filter: 'blur(15px)' }}
+                animate={{ opacity: [0, 1, 1, 0], scale: [0.3, 1, 1.1, 2.5], filter: ['blur(15px)', 'blur(0px)', 'blur(0px)', 'blur(30px)'] }}
+                transition={{ duration: 2.2, delay: 0.15, times: [0, 0.2, 0.7, 1] }}
                 className="relative z-40 flex flex-col items-center select-none pointer-events-none"
               >
-                <span className="text-8xl md:text-[220px] font-black font-display text-white tracking-[0.2em] drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]">領域</span>
-                <span className="text-8xl md:text-[220px] font-black font-display text-red-600 tracking-[0.2em] drop-shadow-[0_0_50px_rgba(220,38,38,0.8)] -mt-10">展開</span>
+                <span className="text-8xl md:text-[200px] font-black font-display text-white tracking-[0.15em] drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]">領域</span>
+                <span className="text-8xl md:text-[200px] font-black font-display text-red-500 tracking-[0.15em] drop-shadow-[0_0_60px_rgba(220,38,38,0.9)] -mt-8 md:-mt-12">展開</span>
               </motion.div>
             </motion.div>
 
@@ -348,7 +402,7 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 0, 1] }}
-              transition={{ duration: 2.5, times: [0, 0.85, 1] }}
+              transition={{ duration: 2.5, times: [0, 0.88, 1] }}
               className="absolute inset-0 bg-white z-50"
             />
           </motion.div>
